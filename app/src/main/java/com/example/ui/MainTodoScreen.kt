@@ -259,29 +259,29 @@ fun MainTodoScreen(
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(meshColor1, Color.Transparent),
-                    center = Offset(size.width * 0.2f, size.height * 0.2f),
-                    radius = size.width * 0.8f
+                    center = Offset(size.width * -0.1f, size.height * -0.1f),
+                    radius = size.width * 1.2f
                 ),
-                center = Offset(size.width * 0.2f, size.height * 0.2f),
-                radius = size.width * 0.8f
+                center = Offset(size.width * -0.1f, size.height * -0.1f),
+                radius = size.width * 1.2f
             )
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(meshColor2, Color.Transparent),
-                    center = Offset(size.width * 0.8f, size.height * 0.6f),
-                    radius = size.width * 0.9f
+                    center = Offset(size.width * 1.1f, size.height * 0.4f),
+                    radius = size.width * 1.0f
                 ),
-                center = Offset(size.width * 0.8f, size.height * 0.6f),
-                radius = size.width * 0.9f
+                center = Offset(size.width * 1.1f, size.height * 0.4f),
+                radius = size.width * 1.0f
             )
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(meshColor3, Color.Transparent),
-                    center = Offset(size.width * 0.3f, size.height * 0.9f),
-                    radius = size.width * 0.7f
+                    center = Offset(size.width * 0.2f, size.height * 1.1f),
+                    radius = size.width * 0.9f
                 ),
-                center = Offset(size.width * 0.3f, size.height * 0.9f),
-                radius = size.width * 0.7f
+                center = Offset(size.width * 0.2f, size.height * 1.1f),
+                radius = size.width * 0.9f
             )
         }
 
@@ -408,10 +408,23 @@ fun MainTodoScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(catColor.copy(alpha = 0.05f))
-                                        .border(1.dp, catColor.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
-                                        .padding(12.dp)
+                                        .clip(RoundedCornerShape(24.dp))
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors = listOf(
+                                                    catColor.copy(alpha = 0.08f),
+                                                    catColor.copy(alpha = 0.02f)
+                                                )
+                                            )
+                                        )
+                                        .border(
+                                            1.dp, 
+                                            Brush.linearGradient(
+                                                listOf(catColor.copy(alpha = 0.2f), Color.Transparent)
+                                            ), 
+                                            RoundedCornerShape(24.dp)
+                                        )
+                                        .padding(14.dp)
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                         // Category Section Header
@@ -434,6 +447,8 @@ fun MainTodoScreen(
                                                 }
                                             }
                                         )
+
+                                        Spacer(modifier = Modifier.height(4.dp))
 
                                         // Tasks list under this category
                                         if (catTasks.isEmpty()) {
