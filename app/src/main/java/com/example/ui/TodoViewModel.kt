@@ -2,8 +2,11 @@ package com.example.ui
 
 import android.app.Application
 import android.content.Context
+import android.os.Environment
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.R
 import com.example.data.AppDatabase
 import com.example.data.Category
 import com.example.data.Subtask
@@ -13,15 +16,27 @@ import com.example.util.AiManager
 import com.example.util.AiTaskResult
 import com.example.util.JalaliCalendar
 import com.example.util.SoundManager
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+data class BackupData(
+    val categories: List<Category>,
+    val tasks: List<Task>,
+    val subtasks: List<Subtask>
+)
 
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -311,8 +326,55 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             _aiProcessedTasks.value = emptyList()
         }
     }
-    
+
     fun clearAiResults() {
         _aiProcessedTasks.value = emptyList()
+    }
+
+    // --- Backup & Restore ---
+    private val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+    private val backupAdapter = moshi.adapter(BackupData::class.java)
+
+    fun exportBackup() {
+        viewModelScope.launch {
+            try {
+                val data = BackupData(
+                    categories = repository.getCategoriesList(),
+                    tasks = repository.getAllTasksList(),
+                    subtasks = repository.getAllSubtasksList()
+                )
+                val json = backupAdapter.toJson(data)
+                
+                withContext(Dispatchers.IO) {
+                    val fileName = "MyTasks_Backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.json"
+                    val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val file = File(downloadsDir, fileName)
+                    file.writeText(json)
+                }
+                
+                Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.backup_success), Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.backup_failed), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    fun importBackup(json: String) {
+        viewModelScope.launch {
+            try {
+                val data = backupAdapter.fromJson(json) ?: throw Exception("Invalid data")
+                
+                // Clear existing and insert new
+                data.categories.forEach { repository.insertCategory(it) }
+                data.tasks.forEach { repository.insertTaskDirectly(it) }
+                data.subtasks.forEach { repository.insertSubtask(it) }
+                
+                Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.restore_success), Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(getApplication(), getApplication<Application>().getString(R.string.restore_failed), Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }

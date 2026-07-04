@@ -1,6 +1,9 @@
 package com.example.ui
 
 import androidx.compose.foundation.background
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,6 +83,31 @@ fun SettingsBottomSheet(
                 icon = Icons.Rounded.Dashboard,
                 title = stringResource(R.string.manage_categories),
                 onClick = onManageCategories
+            )
+
+            // Backup & Restore
+            val context = LocalContext.current
+            val filePickerLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: Uri? ->
+                uri?.let {
+                    val content = context.contentResolver.openInputStream(it)?.bufferedReader()?.use { r -> r.readText() }
+                    if (content != null) {
+                        viewModel.importBackup(content)
+                    }
+                }
+            }
+
+            SettingsRow(
+                icon = Icons.Rounded.CloudUpload,
+                title = stringResource(R.string.export_backup),
+                onClick = { viewModel.exportBackup() }
+            )
+
+            SettingsRow(
+                icon = Icons.Rounded.CloudDownload,
+                title = stringResource(R.string.import_backup),
+                onClick = { filePickerLauncher.launch("application/json") }
             )
 
             // Gemini API Key

@@ -13,6 +13,24 @@ class TodoRepository(
     val tasks: Flow<List<Task>> = todoDao.getTasks()
     val subtasks: Flow<List<Subtask>> = todoDao.getSubtasks()
 
+    suspend fun getCategoriesList(): List<Category> {
+        return todoDao.getCategoriesList()
+    }
+
+    suspend fun getAllTasksList(): List<Task> {
+        return todoDao.getAllTasksList()
+    }
+
+    suspend fun getAllSubtasksList(): List<Subtask> {
+        val list = mutableListOf<Subtask>()
+        // We need a DAO method for all subtasks if not present
+        return todoDao.getAllSubtasksList()
+    }
+
+    suspend fun insertTaskDirectly(task: Task) {
+        todoDao.insertTask(task)
+    }
+
     suspend fun insertCategory(category: Category): Long {
         return todoDao.insertCategory(category)
     }

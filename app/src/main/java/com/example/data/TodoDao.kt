@@ -64,6 +64,9 @@ interface TodoDao {
     @Query("SELECT * FROM subtasks")
     fun getSubtasks(): Flow<List<Subtask>>
 
+    @Query("SELECT * FROM subtasks")
+    suspend fun getAllSubtasksList(): List<Subtask>
+
     @Query("SELECT * FROM subtasks WHERE taskId = :taskId")
     fun getSubtasksForTask(taskId: Int): Flow<List<Subtask>>
 

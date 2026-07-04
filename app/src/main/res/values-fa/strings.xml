@@ -48,4 +48,10 @@
     <string name="settings">تنظیمات</string>
     <string name="app_language">زبان برنامه</string>
     <string name="api_key_desc">برای قابلیت افزودن هوشمند. می‌توانید کلید رایگان را از Google AI Studio دریافت کنید.</string>
+    <string name="export_backup">تهیه نسخه پشتیبان (JSON)</string>
+    <string name="import_backup">بازیابی نسخه پشتیبان (JSON)</string>
+    <string name="backup_success">بک‌آپ در پوشه Downloads ذخیره شد!</string>
+    <string name="backup_failed">خطا در تهیه بک‌آپ.</string>
+    <string name="restore_success">داده‌ها با موفقیت بازیابی شدند!</string>
+    <string name="restore_failed">فایل بک‌آپ نامعتبر است.</string>
 </resources>
