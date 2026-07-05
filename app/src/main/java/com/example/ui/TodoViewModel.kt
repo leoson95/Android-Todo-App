@@ -55,11 +55,20 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val _geminiApiKey = MutableStateFlow(sharedPrefs.getString("gemini_api_key", "") ?: "")
     val geminiApiKey: StateFlow<String> = _geminiApiKey.asStateFlow()
 
+    private val _selectedAiModel = MutableStateFlow(sharedPrefs.getString("selected_ai_model", "gemini-1.5-flash") ?: "gemini-1.5-flash")
+    val selectedAiModel: StateFlow<String> = _selectedAiModel.asStateFlow()
+
+    private val _availableAiModels = MutableStateFlow<List<String>>(emptyList())
+    val availableAiModels: StateFlow<List<String>> = _availableAiModels.asStateFlow()
+
     private val _aiProcessedTasks = MutableStateFlow<List<AiTaskResult>>(emptyList())
     val aiProcessedTasks: StateFlow<List<AiTaskResult>> = _aiProcessedTasks.asStateFlow()
 
     private val _isAiProcessing = MutableStateFlow(false)
     val isAiProcessing: StateFlow<Boolean> = _isAiProcessing.asStateFlow()
+
+    private val _aiErrorMessage = MutableStateFlow<String?>(null)
+    val aiErrorMessage: StateFlow<String?> = _aiErrorMessage.asStateFlow()
 
     val categories: StateFlow<List<Category>>
     val tasks: StateFlow<List<Task>>
@@ -112,6 +121,29 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         sharedPrefs.edit().putString("gemini_api_key", key).apply()
     }
 
+    fun setAiModel(model: String) {
+        _selectedAiModel.value = model
+        sharedPrefs.edit().putString("selected_ai_model", model).apply()
+    }
+
+    fun loadAvailableModels() {
+        viewModelScope.launch {
+            val key = _geminiApiKey.value
+            if (key.isBlank()) {
+                Toast.makeText(getApplication(), "Enter API Key first!", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            _isAiProcessing.value = true
+            val models = AiManager.fetchAvailableModels(key)
+            if (models.isNotEmpty()) {
+                _availableAiModels.value = models
+            } else {
+                Toast.makeText(getApplication(), "Could not load models.", Toast.LENGTH_SHORT).show()
+            }
+            _isAiProcessing.value = false
+        }
+    }
+
     fun markFirstRunDone() {
         _isFirstRun.value = false
         sharedPrefs.edit().putBoolean("is_first_run", false).apply()
@@ -160,14 +192,12 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             val oldSubtasks = subtasks.value.filter { it.taskId == taskId }
             val newIds = subtasksList.map { it.id }.filter { it != 0 }.toSet()
 
-            // Delete subtasks that are no longer in the new list
             for (old in oldSubtasks) {
                 if (old.id !in newIds) {
                     repository.deleteSubtask(old)
                 }
             }
 
-            // Update or add new subtasks
             for (newSub in subtasksList) {
                 if (newSub.id == 0) {
                     repository.insertSubtask(newSub)
@@ -238,12 +268,10 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             val list = categories.value.filter { it.id != -1 }.toMutableList()
             val index = list.indexOfFirst { it.id == category.id }
             if (index > 0) {
-                // Swap in list
                 val temp = list[index - 1]
                 list[index - 1] = list[index]
                 list[index] = temp
                 
-                // Update order indexes
                 list.forEachIndexed { i, cat ->
                     if (cat.orderIndex != i) {
                         repository.updateCategory(cat.copy(orderIndex = i))
@@ -259,12 +287,10 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             val list = categories.value.filter { it.id != -1 }.toMutableList()
             val index = list.indexOfFirst { it.id == category.id }
             if (index != -1 && index < list.size - 1) {
-                // Swap in list
                 val temp = list[index + 1]
                 list[index + 1] = list[index]
                 list[index] = temp
                 
-                // Update order indexes
                 list.forEachIndexed { i, cat ->
                     if (cat.orderIndex != i) {
                         repository.updateCategory(cat.copy(orderIndex = i))
@@ -283,33 +309,50 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
     fun processInputWithAi(input: String) {
         if (input.isBlank()) return
+        
+        val key = _geminiApiKey.value
+        if (key.isBlank()) {
+            _aiErrorMessage.value = "Please enter your Gemini API Key in Settings first!"
+            return
+        }
+
         viewModelScope.launch {
             _isAiProcessing.value = true
             _aiProcessedTasks.value = emptyList()
+            _aiErrorMessage.value = null
             
-            val jalaliDate = JalaliCalendar.getNowJalali()
-            val gregorianDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            
-            val results = AiManager.processTasks(
-                input = input,
-                apiKey = _geminiApiKey.value,
-                existingCategories = categories.value,
-                currentJalaliDate = jalaliDate,
-                currentGregorianDate = gregorianDate
-            )
-            
-            _aiProcessedTasks.value = results
-            _isAiProcessing.value = false
+            try {
+                val jalaliDate = JalaliCalendar.getNowJalali()
+                val gregorianDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                
+                val results = AiManager.processTasks(
+                    input = input,
+                    apiKey = key,
+                    modelName = _selectedAiModel.value,
+                    existingCategories = categories.value,
+                    currentJalaliDate = jalaliDate,
+                    currentGregorianDate = gregorianDate
+                )
+                
+                if (results.isEmpty()) {
+                    _aiErrorMessage.value = "No tasks found in the text. Please describe them more clearly."
+                }
+                
+                _aiProcessedTasks.value = results
+            } catch (e: Exception) {
+                val errorDetails = e.message ?: "Unknown Error"
+                _aiErrorMessage.value = errorDetails
+            } finally {
+                _isAiProcessing.value = false
+            }
         }
     }
 
     fun addAllAiTasks() {
         viewModelScope.launch {
             _aiProcessedTasks.value.forEach { aiTask ->
-                // Find or create category
                 var catId = categories.value.find { it.name.equals(aiTask.categoryName, ignoreCase = true) }?.id
                 if (catId == null && !aiTask.categoryName.isNullOrBlank()) {
-                    // Create new category with a default color
                     val newCat = Category(name = aiTask.categoryName, colorHex = "#3B82F6")
                     catId = repository.insertCategory(newCat).toInt()
                 }
@@ -329,6 +372,7 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearAiResults() {
         _aiProcessedTasks.value = emptyList()
+        _aiErrorMessage.value = null
     }
 
     // --- Backup & Restore ---
@@ -365,7 +409,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val data = backupAdapter.fromJson(json) ?: throw Exception("Invalid data")
                 
-                // Clear existing and insert new
                 data.categories.forEach { repository.insertCategory(it) }
                 data.tasks.forEach { repository.insertTaskDirectly(it) }
                 data.subtasks.forEach { repository.insertSubtask(it) }

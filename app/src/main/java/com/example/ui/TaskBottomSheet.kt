@@ -41,6 +41,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddTaskSheet(
+    viewModel: TodoViewModel,
     taskToEdit: Task? = null,
     existingSubtasks: List<Subtask> = emptyList(),
     categories: List<Category>,
@@ -58,6 +59,7 @@ fun AddTaskSheet(
     onAddCategory: (String, String) -> Unit
 ) {
     val context = LocalContext.current
+    val isDark by viewModel.isDarkTheme.collectAsState()
 
     var title by remember { mutableStateOf(taskToEdit?.title ?: "") }
     var description by remember { mutableStateOf(taskToEdit?.description ?: "") }
@@ -158,13 +160,14 @@ fun AddTaskSheet(
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            color = if (isDark) Color(0xFF0F172A) else Color.White
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
+                    .imePadding()
             ) {
                 // Header Row
                 Row(
@@ -176,17 +179,15 @@ fun AddTaskSheet(
                         text = stringResource(R.string.add_task_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = if (isDark) Color.White else Color.Black
                     )
                     IconButton(
                         onClick = onDismiss,
-                        modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                        modifier = Modifier.background(if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f), CircleShape)
                     ) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.close))
+                        Icon(imageVector = Icons.Default.Close, contentDescription = stringResource(R.string.close), tint = if (isDark) Color.White else Color.Black)
                     }
                 }
-
-                val isDark = isSystemInDarkTheme()
 
                 // General Info Card
                 Box(
@@ -196,7 +197,7 @@ fun AddTaskSheet(
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
                             Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.main_info), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.main_info), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = if (isDark) Color.White else Color.Black)
                         }
 
                         TextField(
@@ -206,12 +207,14 @@ fun AddTaskSheet(
                             singleLine = true,
                             shape = RoundedCornerShape(16.dp),
                             colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                                focusedContainerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFC),
+                                unfocusedContainerColor = if (isDark) Color(0xFF0F172A).copy(alpha = 0.5f) else Color.White,
+                                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = if (isDark) Color.White else Color.Black,
+                                unfocusedTextColor = if (isDark) Color.White else Color.Black
                             ),
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp).border(1.dp, if(isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
                         )
 
                         TextField(
@@ -221,12 +224,14 @@ fun AddTaskSheet(
                             maxLines = 3,
                             shape = RoundedCornerShape(16.dp),
                             colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                                focusedContainerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFC),
+                                unfocusedContainerColor = if (isDark) Color(0xFF0F172A).copy(alpha = 0.5f) else Color.White,
+                                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedTextColor = if (isDark) Color.White else Color.Black,
+                                unfocusedTextColor = if (isDark) Color.White else Color.Black
                             ),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().border(1.dp, if(isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
                         )
                     }
                 }
@@ -239,7 +244,7 @@ fun AddTaskSheet(
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
                             Icon(Icons.Default.Menu, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.task_category), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.task_category), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = if (isDark) Color.White else Color.Black)
                         }
 
                         FlowRow(
@@ -260,7 +265,7 @@ fun AddTaskSheet(
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(
                                             if (isSelected) parsedColor.copy(alpha = 0.2f)
-                                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                            else (if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f))
                                         )
                                         .border(
                                             width = if (isSelected) 1.5.dp else 1.dp,
@@ -272,7 +277,7 @@ fun AddTaskSheet(
                                 ) {
                                     Text(
                                         text = category.name,
-                                        color = if (isSelected) parsedColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = if (isSelected) parsedColor else (if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f)),
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                         fontSize = 13.sp
                                     )
@@ -305,7 +310,7 @@ fun AddTaskSheet(
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 16.dp)) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.subtasks_chain), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.subtasks_chain), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, color = if (isDark) Color.White else Color.Black)
                         }
 
                         Row(
@@ -319,12 +324,14 @@ fun AddTaskSheet(
                                 singleLine = true,
                                 shape = RoundedCornerShape(16.dp),
                                 colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
+                                    focusedContainerColor = if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFC),
+                                    unfocusedContainerColor = if (isDark) Color(0xFF0F172A).copy(alpha = 0.5f) else Color.White,
+                                    focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    focusedTextColor = if (isDark) Color.White else Color.Black,
+                                    unfocusedTextColor = if (isDark) Color.White else Color.Black
                                 ),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f).border(1.dp, if(isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
@@ -335,7 +342,7 @@ fun AddTaskSheet(
                                     }
                                 },
                                 shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier.height(56.dp).padding(top = 8.dp)
+                                modifier = Modifier.height(56.dp)
                             ) {
                                 Text(stringResource(R.string.add))
                             }
@@ -351,14 +358,15 @@ fun AddTaskSheet(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(8.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                            .background(if (isDark) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f))
                                             .padding(horizontal = 12.dp, vertical = 6.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
                                             text = "${(index + 1).toPersianDigits()}- ${subtask.title}",
-                                            style = MaterialTheme.typography.bodySmall
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = if (isDark) Color.White else Color.Black
                                         )
                                         IconButton(
                                             onClick = { tempSubtasks.removeAt(index) },
@@ -394,7 +402,8 @@ fun AddTaskSheet(
                                 Text(
                                     text = stringResource(R.string.reminder_alarm),
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDark) Color.White else Color.Black
                                 )
                             }
                             Switch(
@@ -451,7 +460,8 @@ fun AddTaskSheet(
                                 text = stringResource(R.string.repeat_reminder),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 6.dp)
+                                modifier = Modifier.padding(bottom = 6.dp),
+                                color = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f)
                             )
 
                             Row(

@@ -4,12 +4,15 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Send
@@ -19,11 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -36,60 +37,76 @@ import com.example.util.SoundManager
 fun MagicAiFab(
     onNormalClick: () -> Unit,
     onAiInput: (String) -> Unit,
-    isProcessing: Boolean
+    isProcessing: Boolean,
+    isDarkTheme: Boolean
 ) {
     var isLongPressed by remember { mutableStateOf(false) }
     var aiText by remember { mutableStateOf("") }
-    val focusManager = LocalFocusManager.current
 
-    // Glow Animation
-    val infiniteTransition = rememberInfiniteTransition(label = "glow")
-    val glowScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.4f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowScale"
-    )
+    // Smaller FAB (48dp) and moved significantly higher (bottom = 80dp)
+    val fabSize = 48.dp
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.BottomEnd
+        modifier = Modifier.fillMaxSize()
     ) {
+        // Outside tap detection to close
+        if (isLongPressed) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        isLongPressed = false
+                    }
+            )
+        }
+
         Column(
             horizontalAlignment = Alignment.End,
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 80.dp, end = 20.dp) // Significantly higher position
+                .imePadding()
         ) {
-            // Floating Input Field (Glassmorphism)
+            // Floating Input Field (Enhanced Glassmorphism)
             AnimatedVisibility(
                 visible = isLongPressed,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
+                enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
+                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom)
             ) {
                 Box(
                     modifier = Modifier
                         .padding(bottom = 16.dp)
-                        .width(280.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color.White.copy(alpha = 0.1f))
-                        .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
-                        .padding(8.dp)
-                        .glassCard(shape = RoundedCornerShape(20.dp), isDarkTheme = true)
+                        .width(320.dp)
+                        .glassCard(shape = RoundedCornerShape(28.dp), isDarkTheme = isDarkTheme)
+                        .padding(4.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextField(
                             value = aiText,
                             onValueChange = { aiText = it },
-                            placeholder = { Text(stringResource(R.string.ai_task_hint), fontSize = 12.sp) },
+                            placeholder = { 
+                                Text(
+                                    stringResource(R.string.ai_task_hint), 
+                                    fontSize = 13.sp,
+                                    color = if (isDarkTheme) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.5f)
+                                ) 
+                            },
                             modifier = Modifier.weight(1f),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 15.sp,
+                                color = if (isDarkTheme) Color.White else Color.Black
                             ),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = if (isDarkTheme) Color.Black.copy(alpha = 0.3f) else Color.White,
+                                unfocusedContainerColor = if (isDarkTheme) Color.Black.copy(alpha = 0.2f) else Color.White,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                cursorColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = RoundedCornerShape(24.dp),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                             keyboardActions = KeyboardActions(onSend = {
                                 if (aiText.isNotBlank()) {
@@ -99,73 +116,66 @@ fun MagicAiFab(
                                 }
                             })
                         )
-                        IconButton(onClick = {
-                            if (aiText.isNotBlank()) {
-                                onAiInput(aiText)
-                                aiText = ""
-                                isLongPressed = false
-                            }
-                        }) {
-                            Icon(Icons.Default.Send, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        IconButton(
+                            onClick = {
+                                if (aiText.isNotBlank()) {
+                                    onAiInput(aiText)
+                                    aiText = ""
+                                    isLongPressed = false
+                                }
+                            },
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     }
                 }
             }
 
-            // The FAB
-            Box(contentAlignment = Alignment.Center) {
-                // Glow Background
-                if (isLongPressed) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .scale(glowScale)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                                )
-                            )
+            // The FAB (Glassy style)
+            Box(
+                modifier = Modifier
+                    .size(fabSize)
+                    .clip(RoundedCornerShape(14.dp)) // Slightly more square/modern
+                    .glassCard(shape = RoundedCornerShape(14.dp), isDarkTheme = isDarkTheme)
+                    .background(
+                        Brush.linearGradient(
+                            colors = if (isDarkTheme) {
+                                listOf(Color(0xFF6366F1), Color(0xFF4F46E5))
+                            } else {
+                                listOf(Color(0xFF818CF8), Color(0xFF6366F1))
+                            }
                         )
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onTap = { 
-                                    if (isLongPressed) {
-                                        isLongPressed = false
-                                    } else {
-                                        onNormalClick() 
-                                    }
-                                },
-                                onLongPress = {
-                                    SoundManager.playTap()
-                                    isLongPressed = true
-                                }
-                            )
-                        }
-                        .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(18.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isProcessing) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
-                    } else {
-                        Crossfade(targetState = isLongPressed, label = "icon") { long ->
-                            Icon(
-                                imageVector = if (long) Icons.Default.AutoAwesome else Icons.Default.Add,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+                    )
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = { 
+                                if (isLongPressed) isLongPressed = false else onNormalClick() 
+                            },
+                            onLongPress = {
+                                SoundManager.playTap()
+                                isLongPressed = true
+                            }
+                        )
+                    }
+                    .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(14.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isProcessing) {
+                    CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp)
+                } else {
+                    Crossfade(targetState = isLongPressed, label = "icon") { long ->
+                        Icon(
+                            imageVector = if (long) Icons.Default.AutoAwesome else Icons.Default.Add,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
                     }
                 }
             }

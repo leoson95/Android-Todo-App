@@ -3,6 +3,9 @@ package com.example.util
 import com.example.BuildConfig
 import com.example.data.Category
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.BlockThreshold
+import com.google.ai.client.generativeai.type.HarmCategory
+import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.squareup.moshi.Moshi
@@ -27,20 +30,57 @@ object AiManager {
     private val listType = Types.newParameterizedType(List::class.java, AiTaskResult::class.java)
     private val adapter = moshi.adapter<List<AiTaskResult>>(listType)
 
-    private fun getModel(apiKey: String): GenerativeModel {
+    suspend fun fetchAvailableModels(apiKey: String): List<String> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext emptyList()
+        try {
+            val url = "https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey"
+            val client = okhttp3.OkHttpClient()
+            val request = okhttp3.Request.Builder().url(url).build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@withContext emptyList()
+                val body = response.body?.string() ?: return@withContext emptyList()
+                
+                // Parse models from the response
+                val jsonAdapter = moshi.adapter(Map::class.java)
+                val jsonMap = jsonAdapter.fromJson(body)
+                val modelsList = jsonMap?.get("models") as? List<Map<String, Any>>
+                
+                return@withContext modelsList?.mapNotNull { modelMap ->
+                    val name = modelMap["name"] as? String
+                    val methods = modelMap["supportedGenerationMethods"] as? List<*>
+                    if (name?.startsWith("models/gemini") == true && methods?.contains("generateContent") == true) {
+                        name.removePrefix("models/")
+                    } else null
+                } ?: emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    private fun getModel(apiKey: String, modelName: String): GenerativeModel {
         val finalKey = if (apiKey.isNotBlank()) apiKey else BuildConfig.GEMINI_API_KEY
+        val finalModelName = if (modelName.isNotBlank()) modelName else "gemini-1.5-flash"
         return GenerativeModel(
-            modelName = "gemini-1.5-flash",
+            modelName = finalModelName,
             apiKey = finalKey,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
-            }
+            },
+            safetySettings = listOf(
+                SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.ONLY_HIGH),
+                SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.ONLY_HIGH),
+                SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.ONLY_HIGH),
+                SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.ONLY_HIGH)
+            )
         )
     }
 
     suspend fun processTasks(
         input: String,
         apiKey: String,
+        modelName: String,
         existingCategories: List<Category>,
         currentJalaliDate: JalaliCalendar.JalaliDate,
         currentGregorianDate: String
@@ -48,35 +88,46 @@ object AiManager {
         val categoryList = existingCategories.joinToString { it.name }
         
         val systemPrompt = """
-            You are a smart task assistant. Extract tasks from the user's input.
-            Current Jalali Date: ${currentJalaliDate.year}/${currentJalaliDate.month}/${currentJalaliDate.day}
-            Current Gregorian Date: $currentGregorianDate
-            Available Categories: $categoryList
+            You are a task management assistant.
+            Convert user input into a JSON list of task objects.
+            Current Jalali: ${currentJalaliDate.year}/${currentJalaliDate.month}/${currentJalaliDate.day}
+            Current Gregorian: $currentGregorianDate
+            Existing Categories: $categoryList
             
-            Rules:
-            1. Extract title and description.
-            2. Extract reminderTime as a timestamp in milliseconds.
-            3. Match to an existing category if possible, else suggest a new one.
-            4. Detect subtasks if mentioned.
-            5. If no specific year is mentioned for dates like 'tomorrow' or 'next week', use the current year.
-            6. Return a JSON list of objects with fields: title (string), description (string), categoryName (string), reminderTime (long or null), subtasks (list of strings).
+            JSON Schema:
+            - title: string (required)
+            - description: string (optional)
+            - categoryName: string (match existing or suggest new)
+            - reminderTime: long (milliseconds timestamp or null)
+            - subtasks: list of strings
             
-            Example Input: "Tomorrow 8 AM buy bread"
-            Output: [{"title": "Buy bread", "description": "", "categoryName": "Personal", "reminderTime": 1700000000000, "subtasks": []}]
+            IMPORTANT: Return ONLY raw JSON. No markdown. No text outside the JSON list.
         """.trimIndent()
 
         try {
-            val response = getModel(apiKey).generateContent(
+            val response = getModel(apiKey, modelName).generateContent(
                 content {
                     text(systemPrompt)
-                    text("User Input: $input")
+                    text("Input: $input")
                 }
             )
-            val json = response.text ?: return@withContext emptyList()
-            return@withContext adapter.fromJson(json) ?: emptyList()
+            
+            val rawText = response.text ?: throw Exception("AI returned empty text.")
+            
+            var cleanJson = rawText.trim()
+            if (cleanJson.contains("[")) {
+                val start = cleanJson.indexOf("[")
+                val end = cleanJson.lastIndexOf("]")
+                if (start != -1 && end != -1 && end > start) {
+                    cleanJson = cleanJson.substring(start, end + 1)
+                }
+            }
+            
+            return@withContext adapter.fromJson(cleanJson) 
+                ?: throw Exception("Failed to parse AI response.")
+                
         } catch (e: Exception) {
-            e.printStackTrace()
-            return@withContext emptyList()
+            throw Exception("Gemini Error: ${e.localizedMessage ?: "Unknown"}")
         }
     }
 }

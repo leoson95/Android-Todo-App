@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
@@ -63,16 +62,12 @@ fun MainTodoScreen(
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
     var preSelectedCategoryId by remember { mutableStateOf<Int?>(null) }
     
-    // Category settings 
     var isCategoryManagerShown by remember { mutableStateOf(false) }
-
-    // Category long-press actions
     var selectedCategoryForAction by remember { mutableStateOf<Category?>(null) }
     var isCategoryActionDialogShown by remember { mutableStateOf(false) }
     var isEditCategoryNameDialogShown by remember { mutableStateOf(false) }
     var isAddCategoryDialogShown by remember { mutableStateOf(false) }
 
-    // Sound effect trigger helper
     val onPlayTap = { SoundManager.playTap() }
 
     if (isCategoryManagerShown) {
@@ -84,9 +79,7 @@ fun MainTodoScreen(
                 isCategoryActionDialogShown = true
                 isCategoryManagerShown = false
             },
-            onAddCategoryClick = {
-                isAddCategoryDialogShown = true
-            },
+            onAddCategoryClick = { isAddCategoryDialogShown = true },
             onEditCategoryClick = { cat ->
                 selectedCategoryForAction = cat
                 isEditCategoryNameDialogShown = true
@@ -100,14 +93,13 @@ fun MainTodoScreen(
     if (isAddCategoryDialogShown) {
         AddCategoryDialog(
             onDismiss = { isAddCategoryDialogShown = false },
-            onSave = { name, colorHex ->
-                viewModel.addCategory(name, colorHex)
-            }
+            onSave = { name, colorHex -> viewModel.addCategory(name, colorHex) }
         )
     }
 
     if (isAddTaskSheetShown) {
         AddTaskSheet(
+            viewModel = viewModel,
             taskToEdit = taskToEdit,
             existingSubtasks = taskToEdit?.let { t -> subtasks.filter { it.taskId == t.id } } ?: emptyList(),
             categories = categories,
@@ -124,9 +116,7 @@ fun MainTodoScreen(
                     viewModel.addTask(title, desc, catId, reminderTime, repeatType, subs.map { it.title })
                 }
             },
-            onAddCategory = { name, colorHex ->
-                viewModel.addCategory(name, colorHex)
-            }
+            onAddCategory = { name, colorHex -> viewModel.addCategory(name, colorHex) }
         )
     }
 
@@ -165,43 +155,41 @@ fun MainTodoScreen(
     // Category Options Dialog
     if (isCategoryActionDialogShown && selectedCategoryForAction != null) {
         val cat = selectedCategoryForAction!!
-        val context = androidx.compose.ui.platform.LocalContext.current
         val locale = java.util.Locale.getDefault()
         val layoutDirection = if (locale.language == "fa") androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
             AlertDialog(
-            onDismissRequest = { isCategoryActionDialogShown = false },
-            title = { Text(stringResource(R.string.manage_category_prefix) + " " + cat.name, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
-            text = { Text(stringResource(R.string.category_options_desc)) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        isCategoryActionDialogShown = false
-                        isEditCategoryNameDialogShown = true
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(stringResource(R.string.edit_name))
-                }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(
+                onDismissRequest = { isCategoryActionDialogShown = false },
+                title = { Text(stringResource(R.string.manage_category_prefix) + " " + cat.name, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+                text = { Text(stringResource(R.string.category_options_desc)) },
+                confirmButton = {
+                    Button(
                         onClick = {
-                            viewModel.deleteCategory(cat)
                             isCategoryActionDialogShown = false
-                        },
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                            isEditCategoryNameDialogShown = true
+                        }
                     ) {
-                        Text(stringResource(R.string.delete_category))
+                        Text(stringResource(R.string.edit_name))
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    TextButton(onClick = { isCategoryActionDialogShown = false }) {
-                        Text(stringResource(R.string.cancel))
+                },
+                dismissButton = {
+                    Row {
+                        TextButton(
+                            onClick = {
+                                viewModel.deleteCategory(cat)
+                                isCategoryActionDialogShown = false
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text(stringResource(R.string.delete_category))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        TextButton(onClick = { isCategoryActionDialogShown = false }) {
+                            Text(stringResource(R.string.cancel))
+                        }
                     }
                 }
-            }
-        )
+            )
         }
     }
 
@@ -209,46 +197,44 @@ fun MainTodoScreen(
     if (isEditCategoryNameDialogShown && selectedCategoryForAction != null) {
         val cat = selectedCategoryForAction!!
         var newName by remember { mutableStateOf(cat.name) }
-        val context = androidx.compose.ui.platform.LocalContext.current
         val locale = java.util.Locale.getDefault()
         val layoutDirection = if (locale.language == "fa") androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
             AlertDialog(
-            onDismissRequest = { isEditCategoryNameDialogShown = false },
-            title = { Text(stringResource(R.string.edit_category_title), fontWeight = FontWeight.Bold) },
-            text = {
-                OutlinedTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    label = { Text(stringResource(R.string.new_name)) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp)
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (newName.isNotBlank()) {
-                            viewModel.updateCategory(cat.copy(name = newName.trim()))
-                            isEditCategoryNameDialogShown = false
-                        }
-                    },
-                    enabled = newName.isNotBlank()
-                ) {
-                    Text(stringResource(R.string.save))
+                onDismissRequest = { isEditCategoryNameDialogShown = false },
+                title = { Text(stringResource(R.string.edit_category_title), fontWeight = FontWeight.Bold) },
+                text = {
+                    OutlinedTextField(
+                        value = newName,
+                        onValueChange = { newName = it },
+                        label = { Text(stringResource(R.string.new_name)) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (newName.isNotBlank()) {
+                                viewModel.updateCategory(cat.copy(name = newName.trim()))
+                                isEditCategoryNameDialogShown = false
+                            }
+                        },
+                        enabled = newName.isNotBlank()
+                    ) {
+                        Text(stringResource(R.string.save))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { isEditCategoryNameDialogShown = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
-            },
-            dismissButton = {
-                TextButton(onClick = { isEditCategoryNameDialogShown = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        )
+            )
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Abstract Mesh Gradient Background
         val bgColor = if (isDarkTheme) Color(0xFF0B1120) else Color(0xFFE2E8F0)
         val meshColor1 = if (isDarkTheme) Color(0xFF3B82F6).copy(alpha = 0.35f) else Color(0xFF3B82F6).copy(alpha = 0.25f)
         val meshColor2 = if (isDarkTheme) Color(0xFF8B5CF6).copy(alpha = 0.35f) else Color(0xFF8B5CF6).copy(alpha = 0.25f)
@@ -288,267 +274,179 @@ fun MainTodoScreen(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-            TopAppBar(
-                title = {
-                    val appLanguage by viewModel.appLanguage.collectAsState()
-                    Column(modifier = Modifier.padding(start = 8.dp)) {
-                        Text(
-                            text = stringResource(R.string.my_tasks),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        val context = androidx.compose.ui.platform.LocalContext.current
-                        val dateStr = remember(appLanguage) {
-                            JalaliCalendar.formatShamsiDate(context, System.currentTimeMillis())
+                TopAppBar(
+                    title = {
+                        val appLanguage by viewModel.appLanguage.collectAsState()
+                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                            Text(
+                                text = stringResource(R.string.my_tasks),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            val context = androidx.compose.ui.platform.LocalContext.current
+                            val dateStr = remember(appLanguage) { 
+                                JalaliCalendar.formatShamsiDate(context, System.currentTimeMillis())
+                            }
+                            Text(
+                                text = dateStr,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
                         }
-                        Text(
-                            text = dateStr,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        onPlayTap()
-                        onNavigateToReminders()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Notifications,
-                            contentDescription = stringResource(R.string.manage_reminders),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            onPlayTap()
+                            onNavigateToReminders()
+                        }) {
+                            Icon(Icons.Rounded.Notifications, contentDescription = stringResource(R.string.manage_reminders))
+                        }
+                        IconButton(onClick = {
+                            onPlayTap()
+                            isSettingsSheetShown = true
+                        }) {
+                            Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings))
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                val activeTasks = remember(tasks) { tasks.filter { !it.isCompleted } }
+                val completedTasks = remember(tasks) { tasks.filter { it.isCompleted } }
 
-                    IconButton(onClick = {
-                        onPlayTap()
-                        isSettingsSheetShown = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Settings,
-                            contentDescription = stringResource(R.string.settings),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
+                if (tasks.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
+                        EmptyStateView(isDarkTheme = isDarkTheme)
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                ),
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-        },
-        floatingActionButton = {
-            val isAiProcessing by viewModel.isAiProcessing.collectAsState()
-            MagicAiFab(
-                onNormalClick = {
-                    preSelectedCategoryId = null
-                    onPlayTap()
-                    isAddTaskSheetShown = true
-                },
-                onAiInput = { input ->
-                    viewModel.processInputWithAi(input)
-                    isAiTaskSheetShown = true
-                },
-                isProcessing = isAiProcessing
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            // 2. Tasks scrollable list
-            val activeTasks = remember(tasks) { tasks.filter { !it.isCompleted } }
-            val completedTasks = remember(tasks) { tasks.filter { it.isCompleted } }
+                } else {
+                    var isCompletedSectionExpanded by remember { mutableStateOf(false) }
+                    val fallbackPrimary = MaterialTheme.colorScheme.primary
+                    val uncategorizedStr = stringResource(R.string.uncategorized)
 
-            if (tasks.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize().weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    EmptyStateView()
-                }
-            } else {
-                var isCompletedSectionExpanded by remember { mutableStateOf(false) }
-                val fallbackPrimary = MaterialTheme.colorScheme.primary
-                val uncategorizedStr = stringResource(R.string.uncategorized)
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 80.dp)
-                ) {
-                    val activeTasksGrouped = activeTasks.groupBy { it.categoryId }
-                    val allCategoriesToDisplay = categories.toMutableList()
-                    val uncategorizedTasks = activeTasksGrouped[-1]
-                    if (uncategorizedTasks != null && uncategorizedTasks.isNotEmpty()) {
-                        allCategoriesToDisplay.add(Category(id = -1, name = uncategorizedStr, colorHex = "#94A3B8"))
-                    }
-
-                    allCategoriesToDisplay.forEach { category ->
-                        val catId = category.id
-                        val catTasks = activeTasksGrouped[catId] ?: emptyList()
-                        
-                        val catColor = try {
-                            Color(android.graphics.Color.parseColor(category.colorHex))
-                        } catch (e: Exception) {
-                            fallbackPrimary
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().weight(1f).padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 100.dp)
+                    ) {
+                        val activeTasksGrouped = activeTasks.groupBy { it.categoryId }
+                        val allCategoriesToDisplay = categories.toMutableList()
+                        if (activeTasksGrouped[-1]?.isNotEmpty() == true) {
+                            allCategoriesToDisplay.add(Category(id = -1, name = uncategorizedStr, colorHex = "#94A3B8"))
                         }
 
-                        if (catTasks.isNotEmpty() || category.id != -1) {
-                            item(key = "category_card_$catId") {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(
-                                            Brush.verticalGradient(
-                                                colors = listOf(
-                                                    catColor.copy(alpha = 0.08f),
-                                                    catColor.copy(alpha = 0.02f)
-                                                )
-                                            )
-                                        )
-                                        .border(
-                                            1.dp, 
-                                            Brush.linearGradient(
-                                                listOf(catColor.copy(alpha = 0.2f), Color.Transparent)
-                                            ), 
-                                            RoundedCornerShape(24.dp)
-                                        )
-                                        .padding(14.dp)
-                                ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        // Category Section Header
-                                        CategorySectionHeader(
-                                            category = category,
-                                            catColor = catColor,
-                                            taskCount = catTasks.size,
-                                            onLongPress = {
-                                                if (category.id != -1) {
-                                                    selectedCategoryForAction = category
-                                                    isCategoryActionDialogShown = true
-                                                    SoundManager.playTap()
-                                                }
-                                            },
-                                            onAddClick = {
-                                                if (category.id != -1) {
-                                                    preSelectedCategoryId = category.id
-                                                    SoundManager.playTap()
-                                                    isAddTaskSheetShown = true
-                                                }
-                                            }
-                                        )
+                        allCategoriesToDisplay.forEach { category ->
+                            val catId = category.id
+                            val catTasks = activeTasksGrouped[catId] ?: emptyList()
+                            val catColor = try { Color(android.graphics.Color.parseColor(category.colorHex)) } catch (e: Exception) { fallbackPrimary }
 
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        // Tasks list under this category
-                                        if (catTasks.isEmpty()) {
-                                            Text(
-                                                text = stringResource(R.string.no_tasks_in_category),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                                modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)
-                                            )
-                                        } else {
-                                            catTasks.forEach { task ->
-                                                TaskRowItem(
-                                                    task = task,
-                                                    subtasks = subtasks.filter { it.taskId == task.id },
-                                                    accentColor = catColor,
-                                                    onToggleComplete = { viewModel.toggleTaskCompleted(task) },
-                                                    onEdit = {
-                                                        taskToEdit = task
+                            if (catTasks.isNotEmpty() || category.id != -1) {
+                                item(key = "category_card_$catId") {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(24.dp))
+                                            .background(Brush.verticalGradient(listOf(catColor.copy(alpha = 0.08f), catColor.copy(alpha = 0.02f))))
+                                            .border(1.dp, Brush.linearGradient(listOf(catColor.copy(alpha = 0.2f), Color.Transparent)), RoundedCornerShape(24.dp))
+                                            .padding(14.dp)
+                                    ) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            CategorySectionHeader(
+                                                category = category,
+                                                catColor = catColor,
+                                                taskCount = catTasks.size,
+                                                onLongPress = {
+                                                    if (category.id != -1) {
+                                                        selectedCategoryForAction = category
+                                                        isCategoryActionDialogShown = true
+                                                        SoundManager.playTap()
+                                                    }
+                                                },
+                                                onAddClick = {
+                                                    if (category.id != -1) {
+                                                        preSelectedCategoryId = category.id
+                                                        SoundManager.playTap()
                                                         isAddTaskSheetShown = true
-                                                    },
-                                                    onDelete = { viewModel.deleteTask(task) },
-                                                    onToggleSubtask = { sub -> viewModel.toggleSubtaskCompleted(sub) }
-                                                )
+                                                    }
+                                                }
+                                            )
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            if (catTasks.isEmpty()) {
+                                                Text(stringResource(R.string.no_tasks_in_category), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.padding(start = 16.dp))
+                                            } else {
+                                                catTasks.forEach { task ->
+                                                    TaskRowItem(
+                                                        task = task,
+                                                        subtasks = subtasks.filter { it.taskId == task.id },
+                                                        accentColor = catColor,
+                                                        isDarkTheme = isDarkTheme,
+                                                        onToggleComplete = { viewModel.toggleTaskCompleted(task) },
+                                                        onEdit = { taskToEdit = task; isAddTaskSheetShown = true },
+                                                        onDelete = { viewModel.deleteTask(task) },
+                                                        onToggleSubtask = { sub -> viewModel.toggleSubtaskCompleted(sub) }
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // Collapsible Completed tasks section
-                    if (completedTasks.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme)
-                                    .clickable {
-                                        SoundManager.playTap()
-                                        isCompletedSectionExpanded = !isCompletedSectionExpanded
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(14.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                        if (completedTasks.isNotEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().glassCard(isDarkTheme = isDarkTheme).clickable { isCompletedSectionExpanded = !isCompletedSectionExpanded }
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = if (isCompletedSectionExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                            contentDescription = null
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = stringResource(R.string.completed_tasks),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-
-                                    Box(
-                                        modifier = Modifier
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = completedTasks.size.toPersianDigits(),
-                                            fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                    Row(modifier = Modifier.padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(imageVector = if (isCompletedSectionExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = stringResource(R.string.completed_tasks), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                        }
+                                        Box(modifier = Modifier.clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 2.dp)) {
+                                            Text(text = completedTasks.size.toPersianDigits(), fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                        }
                                     }
                                 }
                             }
-                        }
-
-                        if (isCompletedSectionExpanded) {
-                            items(completedTasks, key = { it.id }) { task ->
-                                TaskRowItem(
-                                    task = task,
-                                    subtasks = subtasks.filter { it.taskId == task.id },
-                                    accentColor = MaterialTheme.colorScheme.outline,
-                                    onToggleComplete = { viewModel.toggleTaskCompleted(task) },
-                                    onEdit = {
-                                        taskToEdit = task
-                                        isAddTaskSheetShown = true
-                                    },
-                                    onDelete = { viewModel.deleteTask(task) },
-                                    onToggleSubtask = { sub -> viewModel.toggleSubtaskCompleted(sub) }
-                                )
+                            if (isCompletedSectionExpanded) {
+                                items(completedTasks, key = { it.id }) { task ->
+                                    TaskRowItem(
+                                        task = task,
+                                        subtasks = subtasks.filter { it.taskId == task.id },
+                                        accentColor = MaterialTheme.colorScheme.outline,
+                                        isDarkTheme = isDarkTheme,
+                                        onToggleComplete = { viewModel.toggleTaskCompleted(task) },
+                                        onEdit = { taskToEdit = task; isAddTaskSheetShown = true },
+                                        onDelete = { viewModel.deleteTask(task) },
+                                        onToggleSubtask = { sub -> viewModel.toggleSubtaskCompleted(sub) }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
+
+        val isAiProcessing by viewModel.isAiProcessing.collectAsState()
+        MagicAiFab(
+            onNormalClick = { preSelectedCategoryId = null; onPlayTap(); isAddTaskSheetShown = true },
+            onAiInput = { input -> viewModel.processInputWithAi(input); isAiTaskSheetShown = true },
+            isProcessing = isAiProcessing,
+            isDarkTheme = isDarkTheme
+        )
     }
 }
 
@@ -562,59 +460,23 @@ fun CategorySectionHeader(
     onAddClick: () -> Unit = {}
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .combinedClickable(
-                onClick = {},
-                onLongClick = onLongPress
-            ),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).combinedClickable(onClick = {}, onLongClick = onLongPress),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(catColor)
-            )
+            Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(catColor))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = category.name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Text(text = category.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Black)
         }
-
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(catColor.copy(alpha = 0.15f))
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = taskCount.toPersianDigits() + stringResource(R.string.tasks_suffix),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (category.id == -1) MaterialTheme.colorScheme.onSurfaceVariant else catColor,
-                    fontSize = 11.sp
-                )
+            Box(modifier = Modifier.clip(CircleShape).background(catColor.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 2.dp)) {
+                Text(text = taskCount.toPersianDigits() + stringResource(R.string.tasks_suffix), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = if (category.id == -1) MaterialTheme.colorScheme.onSurfaceVariant else catColor, fontSize = 11.sp)
             }
             if (category.id != -1) {
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = onAddClick,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.add_task_in_category),
-                        tint = catColor,
-                        modifier = Modifier.size(20.dp)
-                    )
+                IconButton(onClick = onAddClick, modifier = Modifier.size(24.dp)) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = catColor, modifier = Modifier.size(20.dp))
                 }
             }
         }
@@ -626,18 +488,16 @@ fun TaskRowItem(
     task: Task,
     subtasks: List<Subtask>,
     accentColor: Color,
+    isDarkTheme: Boolean,
     onToggleComplete: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onToggleSubtask: (Subtask) -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(true) }
-
-    // Subtasks progress calculations
     val hasSubtasks = subtasks.isNotEmpty()
     val completedSubtasksCount = subtasks.count { it.isCompleted }
     val progressFraction = if (hasSubtasks) completedSubtasksCount.toFloat() / subtasks.size else 0f
-
     val clockSuffixStr = stringResource(R.string.clock_suffix)
     val formattedReminder = task.reminderTime?.let {
         val dateStr = JalaliCalendar.formatShamsiDateShort(it)
@@ -646,181 +506,51 @@ fun TaskRowItem(
         "⏰ $dateStr" + clockSuffixStr + timeStr
     }
 
-    val isDark = isSystemInDarkTheme()
-
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDark)
-            .clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }
-            .padding(14.dp)
+        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(14.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Right checkbox
-            Checkbox(
-                checked = task.isCompleted,
-                onCheckedChange = { onToggleComplete() },
-                colors = CheckboxDefaults.colors(checkedColor = accentColor)
-            )
-
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleComplete() }, colors = CheckboxDefaults.colors(checkedColor = accentColor))
             Spacer(modifier = Modifier.width(4.dp))
-
-            // Center details
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
+                Text(text = task.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None, color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (task.description.isNotBlank()) {
-                    Text(
-                        text = task.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
+                    Text(text = task.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
                 }
-
-                Row(
-                    modifier = Modifier.padding(top = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (formattedReminder != null && !task.isCompleted) {
-                        Text(
-                            text = formattedReminder,
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text(text = formattedReminder, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                     }
-
                     if (hasSubtasks) {
-                        Text(
-                            text = "🔗 " + completedSubtasksCount.toPersianDigits() + stringResource(R.string.of) + subtasks.size.toPersianDigits() + stringResource(R.string.subtasks_suffix),
-                            fontSize = 11.sp,
-                            color = accentColor,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text(text = "🔗 " + completedSubtasksCount.toPersianDigits() + stringResource(R.string.of) + subtasks.size.toPersianDigits() + stringResource(R.string.subtasks_suffix), fontSize = 11.sp, color = accentColor, fontWeight = FontWeight.Bold)
                     }
                 }
             }
-
-            // Left edit and delete buttons
             Row {
-                IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = stringResource(R.string.add_task_title), // Fallback since there is no edit task string
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = Icons.Default.DeleteOutline,
-                        contentDescription = stringResource(R.string.delete_task),
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) { Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), modifier = Modifier.size(20.dp)) }
+                IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) { Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f), modifier = Modifier.size(20.dp)) }
             }
         }
-
-        // Subtask Progress bar
         if (hasSubtasks && !task.isCompleted) {
             Spacer(modifier = Modifier.height(10.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
-            ) {
-                LinearProgressIndicator(
-                    progress = { progressFraction },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(5.dp)
-                        .clip(CircleShape),
-                    color = accentColor,
-                    trackColor = accentColor.copy(alpha = 0.15f)
-                )
-                Text(
-                    text = "${(progressFraction * 100).toInt().toPersianDigits()}%",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = accentColor
-                )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                LinearProgressIndicator(progress = { progressFraction }, modifier = Modifier.weight(1f).height(5.dp).clip(CircleShape), color = accentColor, trackColor = accentColor.copy(alpha = 0.15f))
+                Text(text = "${(progressFraction * 100).toInt().toPersianDigits()}%", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accentColor)
             }
-        }
-
-        // Subtasks Tree Expandable Section
-        if (hasSubtasks && isExpanded && !task.isCompleted) {
-            Spacer(modifier = Modifier.height(12.dp))
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                subtasks.forEach { sub ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, top = 2.dp, bottom = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Custom L-connector tree lines
-                        Box(modifier = Modifier.width(18.dp).height(24.dp)) {
-                            // Vertical thread
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .width(1.5.dp)
-                                    .fillMaxHeight()
-                                    .background(accentColor.copy(alpha = 0.3f))
-                            )
-                            // Horizontal arm
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .width(12.dp)
-                                    .height(1.5.dp)
-                                    .background(accentColor.copy(alpha = 0.3f))
-                            )
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                                .clickable { onToggleSubtask(sub) }
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Checkbox(
-                                checked = sub.isCompleted,
-                                onCheckedChange = { onToggleSubtask(sub) },
-                                modifier = Modifier.size(24.dp),
-                                colors = CheckboxDefaults.colors(checkedColor = accentColor)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = sub.title,
-                                style = MaterialTheme.typography.bodySmall,
-                                textDecoration = if (sub.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                                color = if (sub.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+            if (isExpanded) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    subtasks.forEach { sub ->
+                        Row(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 2.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.width(18.dp).height(24.dp)) {
+                                Box(modifier = Modifier.align(Alignment.CenterStart).width(1.5.dp).fillMaxHeight().background(accentColor.copy(alpha = 0.3f)))
+                                Box(modifier = Modifier.align(Alignment.CenterStart).width(12.dp).height(1.5.dp).background(accentColor.copy(alpha = 0.3f)))
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)).clickable { onToggleSubtask(sub) }.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                Checkbox(checked = sub.isCompleted, onCheckedChange = { onToggleSubtask(sub) }, modifier = Modifier.size(24.dp), colors = CheckboxDefaults.colors(checkedColor = accentColor))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(text = sub.title, style = MaterialTheme.typography.bodySmall, textDecoration = if (sub.isCompleted) TextDecoration.LineThrough else TextDecoration.None, color = if (sub.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
                         }
                     }
                 }
@@ -830,45 +560,14 @@ fun TaskRowItem(
 }
 
 @Composable
-fun EmptyStateView() {
-    val isDark = isSystemInDarkTheme()
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp)
-            .glassCard(shape = RoundedCornerShape(24.dp), isDarkTheme = isDark)
-    ) {
-        Column(
-            modifier = Modifier.padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.TaskAlt,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                modifier = Modifier.size(64.dp)
-            )
-
+fun EmptyStateView(isDarkTheme: Boolean) {
+    Box(modifier = Modifier.fillMaxWidth().padding(32.dp).glassCard(isDarkTheme = isDarkTheme)) {
+        Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Icon(imageVector = Icons.Default.TaskAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), modifier = Modifier.size(64.dp))
             Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = stringResource(R.string.no_tasks_yet),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-
+            Text(text = stringResource(R.string.no_tasks_yet), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = stringResource(R.string.add_first_task_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                lineHeight = 20.sp
-            )
+            Text(text = stringResource(R.string.add_first_task_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, lineHeight = 20.sp)
         }
     }
 }

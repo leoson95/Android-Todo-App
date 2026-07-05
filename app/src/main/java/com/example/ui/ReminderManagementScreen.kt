@@ -7,7 +7,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -45,6 +44,7 @@ fun ReminderManagementScreen(
 ) {
     val tasks by viewModel.tasks.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
 
     val upcomingReminders = remember(tasks) {
         tasks.filter { it.reminderTime != null && !it.isCompleted && it.reminderTime!! > System.currentTimeMillis() }
@@ -72,12 +72,12 @@ fun ReminderManagementScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
                     titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = if (isDarkTheme) Color(0xFF0F172A) else Color(0xFFF8FAFC)
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -99,9 +99,8 @@ fun ReminderManagementScreen(
 
             if (upcomingReminders.isEmpty()) {
                 item {
-                    val isDark = isSystemInDarkTheme()
                     Box(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).glassCard(shape = RoundedCornerShape(16.dp), isDarkTheme = isDark)
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp).glassCard(shape = RoundedCornerShape(16.dp), isDarkTheme = isDarkTheme)
                     ) {
                         Column(
                             modifier = Modifier.padding(24.dp),
@@ -130,6 +129,7 @@ fun ReminderManagementScreen(
                     ReminderTaskCard(
                         task = task,
                         category = category,
+                        isDarkTheme = isDarkTheme,
                         onCancelReminder = {
                             val updated = task.copy(reminderTime = null, repeatType = null)
                             viewModel.updateTask(updated)
@@ -146,7 +146,7 @@ fun ReminderManagementScreen(
                         .fillMaxWidth()
                         .clickable { isXiaomiGuideExpanded = !isXiaomiGuideExpanded },
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.05f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                     ),
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
@@ -190,7 +190,8 @@ fun ReminderManagementScreen(
                                     text = stringResource(R.string.xiaomi_fix_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
-                                    lineHeight = 18.sp
+                                    lineHeight = 18.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
 
                                 val steps = listOf(
@@ -223,6 +224,7 @@ fun ReminderManagementScreen(
 fun ReminderTaskCard(
     task: Task,
     category: Category?,
+    isDarkTheme: Boolean,
     onCancelReminder: () -> Unit
 ) {
     val clockSuffixStr = stringResource(R.string.clock_suffix)
@@ -241,9 +243,8 @@ fun ReminderTaskCard(
         else -> stringResource(R.string.no_repeat)
     }
 
-    val isDark = isSystemInDarkTheme()
     Box(
-        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDark)
+        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
