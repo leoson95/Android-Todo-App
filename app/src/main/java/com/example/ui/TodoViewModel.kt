@@ -17,7 +17,6 @@ import com.example.util.AiTaskResult
 import com.example.util.JalaliCalendar
 import com.example.util.SoundManager
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,20 +45,12 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
     private val _isDarkTheme = MutableStateFlow(false)
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
 
-    private val _isFirstRun = MutableStateFlow(sharedPrefs.getBoolean("is_first_run", true))
-    val isFirstRun: StateFlow<Boolean> = _isFirstRun.asStateFlow()
-
     private val _appLanguage = MutableStateFlow("system")
     val appLanguage: StateFlow<String> = _appLanguage.asStateFlow()
 
-    private val _geminiApiKey = MutableStateFlow(sharedPrefs.getString("gemini_api_key", "") ?: "")
-    val geminiApiKey: StateFlow<String> = _geminiApiKey.asStateFlow()
-
-    private val _selectedAiModel = MutableStateFlow(sharedPrefs.getString("selected_ai_model", "gemini-1.5-flash") ?: "gemini-1.5-flash")
-    val selectedAiModel: StateFlow<String> = _selectedAiModel.asStateFlow()
-
-    private val _availableAiModels = MutableStateFlow<List<String>>(emptyList())
-    val availableAiModels: StateFlow<List<String>> = _availableAiModels.asStateFlow()
+    val categories: StateFlow<List<Category>>
+    val tasks: StateFlow<List<Task>>
+    val subtasks: StateFlow<List<Subtask>>
 
     private val _aiProcessedTasks = MutableStateFlow<List<AiTaskResult>>(emptyList())
     val aiProcessedTasks: StateFlow<List<AiTaskResult>> = _aiProcessedTasks.asStateFlow()
@@ -69,10 +60,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _aiErrorMessage = MutableStateFlow<String?>(null)
     val aiErrorMessage: StateFlow<String?> = _aiErrorMessage.asStateFlow()
-
-    val categories: StateFlow<List<Category>>
-    val tasks: StateFlow<List<Task>>
-    val subtasks: StateFlow<List<Subtask>>
 
     init {
         val database = AppDatabase.getDatabase(application)
@@ -114,39 +101,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         SoundManager.playTap()
         _appLanguage.value = language
         sharedPrefs.edit().putString("app_language", language).apply()
-    }
-
-    fun setGeminiApiKey(key: String) {
-        _geminiApiKey.value = key
-        sharedPrefs.edit().putString("gemini_api_key", key).apply()
-    }
-
-    fun setAiModel(model: String) {
-        _selectedAiModel.value = model
-        sharedPrefs.edit().putString("selected_ai_model", model).apply()
-    }
-
-    fun loadAvailableModels() {
-        viewModelScope.launch {
-            val key = _geminiApiKey.value
-            if (key.isBlank()) {
-                Toast.makeText(getApplication(), "Enter API Key first!", Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            _isAiProcessing.value = true
-            val models = AiManager.fetchAvailableModels(key)
-            if (models.isNotEmpty()) {
-                _availableAiModels.value = models
-            } else {
-                Toast.makeText(getApplication(), "Could not load models.", Toast.LENGTH_SHORT).show()
-            }
-            _isAiProcessing.value = false
-        }
-    }
-
-    fun markFirstRunDone() {
-        _isFirstRun.value = false
-        sharedPrefs.edit().putBoolean("is_first_run", false).apply()
     }
 
     fun addTask(
@@ -307,72 +261,58 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun processInputWithAi(input: String) {
-        if (input.isBlank()) return
-        
-        val key = _geminiApiKey.value
-        if (key.isBlank()) {
-            _aiErrorMessage.value = "Please enter your Gemini API Key in Settings first!"
-            return
-        }
-
+    // --- AI Task Processing ---
+    fun processTasksWithAi(input: String) {
         viewModelScope.launch {
             _isAiProcessing.value = true
-            _aiProcessedTasks.value = emptyList()
             _aiErrorMessage.value = null
-            
             try {
-                val jalaliDate = JalaliCalendar.getNowJalali()
-                val gregorianDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                val currentCategories = categories.value
+                val jalali = JalaliCalendar.getNowJalali()
+                val gregorian = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
                 
                 val results = AiManager.processTasks(
                     input = input,
-                    apiKey = key,
-                    modelName = _selectedAiModel.value,
-                    existingCategories = categories.value,
-                    currentJalaliDate = jalaliDate,
-                    currentGregorianDate = gregorianDate
+                    apiKey = "", // Uses BuildConfig.GEMINI_API_KEY as fallback
+                    modelName = "", // Uses default gemini-1.5-flash as fallback
+                    existingCategories = currentCategories,
+                    currentJalaliDate = jalali,
+                    currentGregorianDate = gregorian
                 )
-                
-                if (results.isEmpty()) {
-                    _aiErrorMessage.value = "No tasks found in the text. Please describe them more clearly."
-                }
-                
                 _aiProcessedTasks.value = results
             } catch (e: Exception) {
-                val errorDetails = e.message ?: "Unknown Error"
-                _aiErrorMessage.value = errorDetails
+                _aiErrorMessage.value = e.message ?: "Unknown error occurred"
             } finally {
                 _isAiProcessing.value = false
             }
         }
     }
 
-    fun addAllAiTasks() {
-        viewModelScope.launch {
-            _aiProcessedTasks.value.forEach { aiTask ->
-                var catId = categories.value.find { it.name.equals(aiTask.categoryName, ignoreCase = true) }?.id
-                if (catId == null && !aiTask.categoryName.isNullOrBlank()) {
-                    val newCat = Category(name = aiTask.categoryName, colorHex = "#3B82F6")
-                    catId = repository.insertCategory(newCat).toInt()
-                }
-                
-                addTask(
-                    title = aiTask.title,
-                    description = aiTask.description,
-                    categoryId = catId ?: -1,
-                    reminderTime = aiTask.reminderTime,
-                    repeatType = "none",
-                    subtasksList = aiTask.subtasks
-                )
-            }
-            _aiProcessedTasks.value = emptyList()
-        }
-    }
-
     fun clearAiResults() {
         _aiProcessedTasks.value = emptyList()
         _aiErrorMessage.value = null
+    }
+
+    fun addAllAiTasks() {
+        viewModelScope.launch {
+            val results = _aiProcessedTasks.value
+            results.forEach { result ->
+                // Try to find a matching category by name, else use uncategorized (-1)
+                val categoryId = categories.value.find { 
+                    it.name.equals(result.categoryName, ignoreCase = true) 
+                }?.id ?: -1
+                
+                addTask(
+                    title = result.title,
+                    description = result.description,
+                    categoryId = categoryId,
+                    reminderTime = result.reminderTime,
+                    repeatType = "none",
+                    subtasksList = result.subtasks
+                )
+            }
+            clearAiResults()
+        }
     }
 
     // --- Backup & Restore ---

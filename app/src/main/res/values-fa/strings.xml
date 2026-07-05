@@ -15,7 +15,10 @@
     <string name="repeat">تکرار</string>
     <string name="no_repeat">بدون تکرار</string>
     <string name="repeat_daily">روزانه</string>
-    <string name="repeat_every_other_day">یک روز در میان</string>
+    <string name="repeat_every_other_day">هر چند روز</string>
+    <string name="every_x_days_label">هر</string>
+    <string name="days_suffix">روز</string>
+    <string name="repeat_desc_x_days">این کار هر %1$s روز یک‌بار تکرار می‌شود.</string>
     <string name="repeat_weekly">هفتگی</string>
     <string name="completed_tasks">کارهای انجام‌شده</string>
     <string name="empty_tasks">هیچ کاری در این بخش نیست! 📝</string>

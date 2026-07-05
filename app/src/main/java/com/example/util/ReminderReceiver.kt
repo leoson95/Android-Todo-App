@@ -48,9 +48,13 @@ class ReminderReceiver : BroadcastReceiver() {
     }
 
     private fun calculateNextRepeatTime(currentTime: Long, repeatType: String): Long? {
-        val interval = when (repeatType) {
+        val type = repeatType.substringBefore(':')
+        val interval = when (type) {
             "daily" -> 24 * 60 * 60 * 1000L
-            "every_other_day" -> 48 * 60 * 60 * 1000L
+            "every_other_day" -> {
+                val days = repeatType.substringAfter(':', "2").toLongOrNull() ?: 2L
+                days * 24 * 60 * 60 * 1000L
+            }
             "weekly" -> 7 * 24 * 60 * 60 * 1000L
             else -> return null
         }

@@ -1,5 +1,5 @@
 # ✨ My Tasks / کارهای من
-### Intelligent Glassmorphism Todo App powered by Gemini AI
+### Ultra-Modern Glassmorphism Todo App for Android
 
 <div align="center">
   <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" width="128" height="128" />
@@ -7,14 +7,13 @@
   <p align="center">
     <a href="https://kotlinlang.org/docs/home.html"><img src="https://img.shields.io/badge/Kotlin-2.0-purple.svg?style=flat&logo=kotlin" alt="Kotlin 2.0" /></a>
     <a href="https://developer.android.com/jetpack/compose"><img src="https://img.shields.io/badge/Jetpack-Compose-blue.svg?style=flat&logo=jetpackcompose" alt="Jetpack Compose" /></a>
-    <a href="https://ai.google.dev/"><img src="https://img.shields.io/badge/Gemini-1.5_Flash-orange.svg?style=flat&logo=google-gemini" alt="Gemini 1.5 Flash" /></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat" alt="License" /></a>
   </p>
 
-  <h3>🚀 تجربه مدیریت هوشمند وظایف با هوش مصنوعی و طراحی مدرن شیشه‌ای</h3>
+  <h3>🚀 مدیریت مدرن وظایف با طراحی خیره‌کننده شیشه‌ای</h3>
   
   <p dir="rtl">
-    <b>کارهای من</b> یک اپلیکیشن مدرن و با کارایی بالا برای اندروید است که با <b>Kotlin</b> و <b>Jetpack Compose</b> توسعه یافته. این برنامه با تلفیق ابزارهای مدیریت وظایف سنتی و قدرت هوش مصنوعی <b>Gemini 1.5 Flash</b>، قابلیت منحصر به فرد "Magic Overlay" را برای ثبت وظایف به زبان عامیانه فراهم کرده است.
+    <b>کارهای من</b> یک اپلیکیشن مدیریت وظایف با کارایی بالا برای اندروید است که با تمرکز بر تجربه کاربری بصری و طراحی مدرن <b>Glassmorphism</b> توسعه یافته. این برنامه با استفاده از <b>Jetpack Compose</b>، محیطی زیبا و روان برای ثبت و سازماندهی فعالیت‌های روزمره فراهم می‌کند.
   </p>
 </div>
 
@@ -25,16 +24,14 @@
 <div align="center">
   <table>
     <tr>
-      <td width="25%"><img src="screenshots/main.png" alt="Main Screen" /></td>
-      <td width="25%"><img src="screenshots/ai mode.png" alt="Magic AI Mode" /></td>
-      <td width="25%"><img src="screenshots/settings.png" alt="Settings & API" /></td>
-      <td width="25%"><img src="screenshots/add task.png" alt="Add Task" /></td>
+      <td width="33%"><img src="screenshots/main.png" alt="Main Screen" /></td>
+      <td width="33%"><img src="screenshots/settings.png" alt="Settings" /></td>
+      <td width="33%"><img src="screenshots/add task.png" alt="Add Task" /></td>
     </tr>
     <tr>
-      <td align="center"><b>Dashboard</b><br/>پیشخوان</td>
-      <td align="center"><b>Magic AI Entry</b><br/>ورودی جادویی</td>
-      <td align="center"><b>Smart Settings</b><br/>تنظیمات هوشمند</td>
-      <td align="center"><b>Manual Entry</b><br/>ثبت دستی</td>
+      <td align="center"><b>Dashboard</b><br/>پیشخوان اصلی</td>
+      <td align="center"><b>Smart Settings</b><br/>تنظیمات پیشرفته</td>
+      <td align="center"><b>Task Entry</b><br/>ثبت وظیفه جدید</td>
     </tr>
   </table>
 </div>
@@ -43,20 +40,20 @@
 
 ## 💎 Key Highlights / ویژگی‌های کلیدی
 
-### 🧠 Magic AI Task Engine (موتور هوشمند AI)
-**English:** Forget tedious forms. Long-press the FAB to activate the **Magic Overlay**. Parse complex sentences like: *"Gym tomorrow at 6 PM, buy groceries on Friday, and meeting with Ali next Monday"* instantly.
+### 🎨 Ultra-Glassmorphism UI (طراحی فوق‌مدرن شیشه‌ای)
+**English:** A stunning interface featuring an ultra-glassy Floating Action Button (FAB) and "Frosted Glass" cards. Built with custom Compose modifiers, mesh gradients, and smooth micro-interactions.
 
-**فارسی:** فرم‌های طولانی را فراموش کنید. با نگه داشتن دکمه اصلی، ورودی جادویی باز می‌شود. جملاتی مثل *"فردا ۸ صبح نون بگیر، جمعه خرید میوه و شنبه ۵ عصر جلسه کاری"* را بنویسید تا هوش مصنوعی همه را استخراج و دسته‌بندی کند.
+**فارسی:** یک رابط کاربری خیره‌کننده با دکمه اصلی (FAB) تمام‌شیشه‌ای و کارت‌های مات. ساخته شده با مودیفایرهای اختصاصی Compose، گرادینت‌های Mesh و انیمیشن‌های بسیار نرم.
 
-### 📅 Dual-Calendar Intelligence (تقویم دوگانه)
-**English:** Native support for both **Jalali (Shamsi)** and **Gregorian** calendars. The UI dynamically adapts based on your selected language.
+### 📅 Dual-Calendar & Smart Scheduling (زمان‌بندی هوشمند)
+**English:** Native support for both **Jalali (Shamsi)** and **Gregorian** calendars. Features advanced recurrence logic (e.g., Every X Days) and an intuitive analog time picker for effortless scheduling.
 
-**فارسی:** پشتیبانی کامل و نیتیو از تقویم **شمسی** و **میلادی**. تمام بخش‌های برنامه از جمله انتخابگر تاریخ و یادآورها با تغییر زبان به صورت خودکار هماهنگ می‌شوند.
+**فارسی:** پشتیبانی کامل از تقویم **شمسی** و **میلادی**. دارای سیستم تکرار پیشرفته (مثلاً تکرار هر X روز یک‌بار) و انتخاب‌گر زمان عقربه‌ای برای تجربه کاربری راحت‌تر.
 
-### 🎨 Glassmorphism UI (طراحی شیشه‌ای)
-**English:** A stunning "Frosted Glass" interface built with custom Compose modifiers. Features mesh gradients and smooth micro-interactions.
+### 🗂️ Task Organization (سازماندهی حرفه‌ای)
+**English:** Categorize tasks with custom colors, manage subtasks (checklists), and set precise reminders with custom repeat patterns.
 
-**فارسی:** یک رابط کاربری خیره‌کننده با استایل شیشه‌ای مات که با مودیفایرهای اختصاصی Compose ساخته شده است. شامل گرادینت‌های Mesh و انیمیشن‌های بسیار نرم.
+**فارسی:** دسته‌بندی کارها با رنگ‌های دلخواه، مدیریت زیرکارها (چک‌لیست) و تنظیم یادآوری‌های دقیق با الگوهای تکرار شخصی‌سازی شده.
 
 ---
 
@@ -65,24 +62,19 @@
 - **Language:** Kotlin 2.0
 - **UI Framework:** Jetpack Compose (100%)
 - **Database:** Room Persistence Library
-- **AI:** Google AI SDK (Gemini 1.5 Flash)
 - **Architecture:** MVVM + Repository Pattern
 - **Date Logic:** Custom Jalali Calendar implementation
+- **Scheduling:** AlarmManager for precise reminders
 - **Concurrency:** Coroutines & Flow
 
 ---
 
 ## 🚀 Getting Started / شروع کار
 
-### 1. AI Setup / تنظیم هوش مصنوعی
-برای استفاده از قابلیت هوش مصنوعی:
-1. یک کلید رایگان از **[Google AI Studio](https://aistudio.google.com/)** دریافت کنید.
-2. در تنظیمات برنامه (⚙️) وارد کنید.
-
-### 2. Build / نصب و اجرا
+### Build & Run / نصب و اجرا
 ```bash
-git clone https://github.com/your-username/my-tasks-ai.git
-# Open in Android Studio Hedgehog or newer
+git clone https://github.com/your-username/my-tasks.git
+# Open in Android Studio Ladybug or newer
 # Sync Gradle and Run
 ```
 

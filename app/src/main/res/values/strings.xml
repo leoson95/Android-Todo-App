@@ -15,7 +15,10 @@
     <string name="repeat">Repeat</string>
     <string name="no_repeat">No Repeat</string>
     <string name="repeat_daily">Daily</string>
-    <string name="repeat_every_other_day">Every Other Day</string>
+    <string name="repeat_every_other_day">Every X Days</string>
+    <string name="every_x_days_label">Every</string>
+    <string name="days_suffix">Days</string>
+    <string name="repeat_desc_x_days">This task will repeat every %1$s days from the selected date.</string>
     <string name="repeat_weekly">Weekly</string>
     <string name="completed_tasks">Completed Tasks</string>
     <string name="empty_tasks">No tasks here! 📝</string>

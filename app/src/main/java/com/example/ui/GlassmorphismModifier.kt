@@ -2,6 +2,7 @@ package com.example.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,9 +20,9 @@ fun Modifier.glassCard(
 ): Modifier = composed {
     // Independent of system theme, using provided isDarkTheme state
     val backgroundColor = if (isDarkTheme) {
-        Color(0xFF0F172A).copy(alpha = 0.85f) // Slate-900 (approx) with 85% alpha
+        Color(0xFF0F172A).copy(alpha = 0.65f) // Reduced alpha for more glass effect
     } else {
-        Color.White.copy(alpha = 0.95f) // Bright White with 95% alpha
+        Color.White.copy(alpha = 0.75f) // Reduced alpha for more glass effect
     }
     
     val borderColor = if (isDarkTheme) {
@@ -45,4 +46,36 @@ fun Modifier.glassCard(
         .clip(shape)
         .background(backgroundColor)
         .border(1.2.dp, borderColor, shape)
+}
+
+fun Modifier.glassFab(
+    isDarkTheme: Boolean
+): Modifier = composed {
+    val backgroundColor = if (isDarkTheme) {
+        Color.White.copy(alpha = 0.1f)
+    } else {
+        Color.White.copy(alpha = 0.3f)
+    }
+    
+    val borderColor = if (isDarkTheme) {
+        Brush.linearGradient(
+            listOf(Color.White.copy(alpha = 0.4f), Color.White.copy(alpha = 0.05f))
+        )
+    } else {
+        Brush.linearGradient(
+            listOf(Color.White.copy(alpha = 0.8f), Color.White.copy(alpha = 0.2f))
+        )
+    }
+
+    this
+        .shadow(
+            elevation = 16.dp,
+            shape = CircleShape,
+            clip = false,
+            ambientColor = Color.Black.copy(alpha = 0.25f),
+            spotColor = Color.Black.copy(alpha = 0.25f)
+        )
+        .clip(CircleShape)
+        .background(backgroundColor)
+        .border(1.5.dp, borderColor, CircleShape)
 }

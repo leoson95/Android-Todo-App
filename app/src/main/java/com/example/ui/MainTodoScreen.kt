@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,10 +53,8 @@ fun MainTodoScreen(
     val tasks by viewModel.tasks.collectAsState()
     val subtasks by viewModel.subtasks.collectAsState()
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
-    val isFirstRun by viewModel.isFirstRun.collectAsState()
 
     var isAddTaskSheetShown by remember { mutableStateOf(false) }
-    var isAiTaskSheetShown by remember { mutableStateOf(false) }
     var isSettingsSheetShown by remember { mutableStateOf(false) }
     var taskToEdit by remember { mutableStateOf<Task?>(null) }
     var preSelectedCategoryId by remember { mutableStateOf<Int?>(null) }
@@ -120,12 +117,6 @@ fun MainTodoScreen(
         )
     }
 
-    if (isAiTaskSheetShown) {
-        AiTaskBottomSheet(
-            viewModel = viewModel,
-            onDismiss = { isAiTaskSheetShown = false }
-        )
-    }
 
     if (isSettingsSheetShown) {
         SettingsBottomSheet(
@@ -138,19 +129,6 @@ fun MainTodoScreen(
         )
     }
 
-    if (isFirstRun) {
-        AlertDialog(
-            onDismissRequest = { viewModel.markFirstRunDone() },
-            title = { Text(stringResource(R.string.ai_guide_title), fontWeight = FontWeight.Bold) },
-            text = { Text(stringResource(R.string.ai_guide_desc)) },
-            confirmButton = {
-                Button(onClick = { viewModel.markFirstRunDone() }) {
-                    Text(stringResource(R.string.got_it))
-                }
-            },
-            shape = RoundedCornerShape(20.dp)
-        )
-    }
 
     // Category Options Dialog
     if (isCategoryActionDialogShown && selectedCategoryForAction != null) {
@@ -440,13 +418,23 @@ fun MainTodoScreen(
             }
         }
 
-        val isAiProcessing by viewModel.isAiProcessing.collectAsState()
-        MagicAiFab(
-            onNormalClick = { preSelectedCategoryId = null; onPlayTap(); isAddTaskSheetShown = true },
-            onAiInput = { input -> viewModel.processInputWithAi(input); isAiTaskSheetShown = true },
-            isProcessing = isAiProcessing,
-            isDarkTheme = isDarkTheme
-        )
+        // Glassmorphism FAB
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 24.dp, bottom = 42.dp)
+                .size(64.dp)
+                .glassFab(isDarkTheme = isDarkTheme)
+                .clickable { preSelectedCategoryId = null; onPlayTap(); isAddTaskSheetShown = true },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = stringResource(R.string.add_task_title),
+                modifier = Modifier.size(32.dp),
+                tint = if (isDarkTheme) Color.White else MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 

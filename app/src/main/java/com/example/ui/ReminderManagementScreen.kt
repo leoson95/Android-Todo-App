@@ -236,10 +236,13 @@ fun ReminderTaskCard(
         shamsiDate + clockSuffixStr + timeStr
     }
 
-    val repeatText = when (task.repeatType) {
-        "daily" -> stringResource(R.string.daily)
-        "every_other_day" -> stringResource(R.string.every_other_day_2)
-        "weekly" -> stringResource(R.string.weekly)
+    val repeatText = when {
+        task.repeatType == "daily" -> stringResource(R.string.daily)
+        task.repeatType?.startsWith("every_other_day") == true -> {
+            val days = task.repeatType.substringAfter(':', "2").toIntOrNull() ?: 2
+            stringResource(R.string.repeat_desc_x_days, days.toPersianDigits())
+        }
+        task.repeatType == "weekly" -> stringResource(R.string.weekly)
         else -> stringResource(R.string.no_repeat)
     }
 

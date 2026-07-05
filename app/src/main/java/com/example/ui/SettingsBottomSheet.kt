@@ -34,13 +34,6 @@ fun SettingsBottomSheet(
 ) {
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
     val appLanguage by viewModel.appLanguage.collectAsState()
-    val geminiApiKey by viewModel.geminiApiKey.collectAsState()
-    val selectedAiModel by viewModel.selectedAiModel.collectAsState()
-    val availableModels by viewModel.availableAiModels.collectAsState()
-    val isProcessing by viewModel.isAiProcessing.collectAsState()
-    
-    var tempApiKey by remember { mutableStateOf(geminiApiKey) }
-    var isModelMenuExpanded by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -120,100 +113,6 @@ fun SettingsBottomSheet(
                 isDarkTheme = isDarkTheme,
                 onClick = { filePickerLauncher.launch("application/json") }
             )
-
-            // Gemini API Settings
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(if (isDarkTheme) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.03f))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Gemini AI Config",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isDarkTheme) Color.White else Color.Black
-                    )
-                }
-                
-                OutlinedTextField(
-                    value = tempApiKey,
-                    onValueChange = { 
-                        tempApiKey = it
-                        viewModel.setGeminiApiKey(it)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter Gemini API key") },
-                    shape = RoundedCornerShape(12.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = if (isDarkTheme) Color.White else Color.Black,
-                        unfocusedTextColor = if (isDarkTheme) Color.White else Color.Black
-                    )
-                )
-
-                // Model Selection
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        OutlinedButton(
-                            onClick = { isModelMenuExpanded = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            enabled = availableModels.isNotEmpty()
-                        ) {
-                            Text(
-                                text = if (availableModels.isEmpty()) "Load models first" else selectedAiModel,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
-                        }
-                        
-                        DropdownMenu(
-                            expanded = isModelMenuExpanded,
-                            onDismissRequest = { isModelMenuExpanded = false },
-                            modifier = Modifier.background(if (isDarkTheme) Color(0xFF1E293B) else Color.White)
-                        ) {
-                            availableModels.forEach { model ->
-                                DropdownMenuItem(
-                                    text = { Text(model) },
-                                    onClick = {
-                                        viewModel.setAiModel(model)
-                                        isModelMenuExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    Button(
-                        onClick = { viewModel.loadAvailableModels() },
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = !isProcessing && tempApiKey.isNotBlank()
-                    ) {
-                        if (isProcessing) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.White)
-                        } else {
-                            Text("Fetch")
-                        }
-                    }
-                }
-                
-                Text(
-                    text = stringResource(R.string.api_key_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
-                )
-            }
         }
     }
 }
