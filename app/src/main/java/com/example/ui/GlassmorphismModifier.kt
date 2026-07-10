@@ -18,34 +18,26 @@ fun Modifier.glassCard(
     shape: Shape = RoundedCornerShape(20.dp),
     isDarkTheme: Boolean
 ): Modifier = composed {
-    // Independent of system theme, using provided isDarkTheme state
     val backgroundColor = if (isDarkTheme) {
-        Color(0xFF0F172A).copy(alpha = 0.65f) // Reduced alpha for more glass effect
+        Color(0xFF0F172A).copy(alpha = 0.65f)
     } else {
-        Color.White.copy(alpha = 0.75f) // Reduced alpha for more glass effect
+        Color.White.copy(alpha = 0.75f)
     }
     
     val borderColor = if (isDarkTheme) {
         Brush.linearGradient(
-            listOf(Color.White.copy(alpha = 0.2f), Color.Transparent)
+            listOf(Color.White.copy(alpha = 0.15f), Color.Transparent)
         )
     } else {
         Brush.linearGradient(
-            listOf(Color.White, Color.White.copy(alpha = 0.4f))
+            listOf(Color.White, Color.White.copy(alpha = 0.3f))
         )
     }
 
     this
-        .shadow(
-            elevation = if (isDarkTheme) 14.dp else 4.dp,
-            shape = shape,
-            clip = false,
-            ambientColor = Color.Black.copy(alpha = 0.2f),
-            spotColor = Color.Black.copy(alpha = 0.2f)
-        )
         .clip(shape)
         .background(backgroundColor)
-        .border(1.2.dp, borderColor, shape)
+        .border(1.dp, borderColor, shape)
 }
 
 fun Modifier.glassFab(

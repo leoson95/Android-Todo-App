@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -213,43 +214,45 @@ fun MainTodoScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        val bgColor = if (isDarkTheme) Color(0xFF0B1120) else Color(0xFFE2E8F0)
-        val meshColor1 = if (isDarkTheme) Color(0xFF3B82F6).copy(alpha = 0.35f) else Color(0xFF3B82F6).copy(alpha = 0.25f)
-        val meshColor2 = if (isDarkTheme) Color(0xFF8B5CF6).copy(alpha = 0.35f) else Color(0xFF8B5CF6).copy(alpha = 0.25f)
-        val meshColor3 = if (isDarkTheme) Color(0xFF10B981).copy(alpha = 0.35f) else Color(0xFF10B981).copy(alpha = 0.25f)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .drawBehind {
+                val bgColor = if (isDarkTheme) Color(0xFF0B1120) else Color(0xFFE2E8F0)
+                val meshColor1 = if (isDarkTheme) Color(0xFF3B82F6).copy(alpha = 0.35f) else Color(0xFF3B82F6).copy(alpha = 0.25f)
+                val meshColor2 = if (isDarkTheme) Color(0xFF8B5CF6).copy(alpha = 0.35f) else Color(0xFF8B5CF6).copy(alpha = 0.25f)
+                val meshColor3 = if (isDarkTheme) Color(0xFF10B981).copy(alpha = 0.35f) else Color(0xFF10B981).copy(alpha = 0.25f)
 
-        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-            drawRect(color = bgColor)
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(meshColor1, Color.Transparent),
+                drawRect(color = bgColor)
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(meshColor1, Color.Transparent),
+                        center = Offset(size.width * -0.1f, size.height * -0.1f),
+                        radius = size.width * 1.2f
+                    ),
                     center = Offset(size.width * -0.1f, size.height * -0.1f),
                     radius = size.width * 1.2f
-                ),
-                center = Offset(size.width * -0.1f, size.height * -0.1f),
-                radius = size.width * 1.2f
-            )
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(meshColor2, Color.Transparent),
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(meshColor2, Color.Transparent),
+                        center = Offset(size.width * 1.1f, size.height * 0.4f),
+                        radius = size.width * 1.0f
+                    ),
                     center = Offset(size.width * 1.1f, size.height * 0.4f),
                     radius = size.width * 1.0f
-                ),
-                center = Offset(size.width * 1.1f, size.height * 0.4f),
-                radius = size.width * 1.0f
-            )
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(meshColor3, Color.Transparent),
+                )
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(meshColor3, Color.Transparent),
+                        center = Offset(size.width * 0.2f, size.height * 1.1f),
+                        radius = size.width * 0.9f
+                    ),
                     center = Offset(size.width * 0.2f, size.height * 1.1f),
                     radius = size.width * 0.9f
-                ),
-                center = Offset(size.width * 0.2f, size.height * 1.1f),
-                radius = size.width * 0.9f
-            )
-        }
-
+                )
+            }
+    ) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -336,58 +339,52 @@ fun MainTodoScreen(
                         allCategoriesToDisplay.forEach { category ->
                             val catId = category.id
                             val catTasks = activeTasksGrouped[catId] ?: emptyList()
-                            
-                            // Memoize color parsing
                             val catColor = try { Color(android.graphics.Color.parseColor(category.colorHex)) } catch (e: Exception) { fallbackPrimary }
 
                             if (catTasks.isNotEmpty() || category.id != -1) {
-                                item(key = "category_card_$catId") {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(24.dp))
-                                            .background(Brush.verticalGradient(listOf(catColor.copy(alpha = 0.08f), catColor.copy(alpha = 0.02f))))
-                                            .border(1.dp, Brush.linearGradient(listOf(catColor.copy(alpha = 0.2f), Color.Transparent)), RoundedCornerShape(24.dp))
-                                            .padding(10.dp)
-                                    ) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                            CategorySectionHeader(
-                                                category = category,
-                                                catColor = catColor,
-                                                taskCount = catTasks.size,
-                                                onLongPress = {
-                                                    if (category.id != -1) {
-                                                        selectedCategoryForAction = category
-                                                        isCategoryActionDialogShown = true
-                                                        SoundManager.playTap()
-                                                    }
-                                                },
-                                                onAddClick = {
-                                                    if (category.id != -1) {
-                                                        preSelectedCategoryId = category.id
-                                                        SoundManager.playTap()
-                                                        isAddTaskSheetShown = true
-                                                    }
-                                                }
-                                            )
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            if (catTasks.isEmpty()) {
-                                                Text(stringResource(R.string.no_tasks_in_category), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.padding(start = 16.dp))
-                                            } else {
-                                                catTasks.forEach { task ->
-                                                    TaskRowItem(
-                                                        task = task,
-                                                        subtasks = subtasksGrouped[task.id] ?: emptyList(),
-                                                        accentColor = catColor,
-                                                        isDarkTheme = isDarkTheme,
-                                                        onToggleComplete = { viewModel.toggleTaskCompleted(task) },
-                                                        onEdit = { taskToEdit = task; isAddTaskSheetShown = true },
-                                                        onDelete = { viewModel.deleteTask(task) },
-                                                        onToggleSubtask = { sub -> viewModel.toggleSubtaskCompleted(sub) }
-                                                    )
-                                                }
+                                item(key = "header_$catId") {
+                                    CategorySectionHeader(
+                                        category = category,
+                                        catColor = catColor,
+                                        taskCount = catTasks.size,
+                                        onLongPress = {
+                                            if (category.id != -1) {
+                                                selectedCategoryForAction = category
+                                                isCategoryActionDialogShown = true
+                                                SoundManager.playTap()
+                                            }
+                                        },
+                                        onAddClick = {
+                                            if (category.id != -1) {
+                                                preSelectedCategoryId = category.id
+                                                SoundManager.playTap()
+                                                isAddTaskSheetShown = true
                                             }
                                         }
+                                    )
+                                }
+                                
+                                if (catTasks.isEmpty() && category.id != -1) {
+                                    item(key = "empty_$catId") {
+                                        Text(
+                                            text = stringResource(R.string.no_tasks_in_category),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                            modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+                                        )
+                                    }
+                                } else {
+                                    items(catTasks, key = { it.id }) { task ->
+                                        TaskRowItem(
+                                            task = task,
+                                            subtasks = subtasksGrouped[task.id] ?: emptyList(),
+                                            accentColor = catColor,
+                                            isDarkTheme = isDarkTheme,
+                                            onToggleComplete = { viewModel.toggleTaskCompleted(task) },
+                                            onEdit = { taskToEdit = task; isAddTaskSheetShown = true },
+                                            onDelete = { viewModel.deleteTask(task) },
+                                            onToggleSubtask = { sub -> viewModel.toggleSubtaskCompleted(sub) }
+                                        )
                                     }
                                 }
                             }
@@ -398,9 +395,9 @@ fun MainTodoScreen(
                                 Box(
                                     modifier = Modifier.fillMaxWidth().glassCard(isDarkTheme = isDarkTheme).clickable { isCompletedSectionExpanded = !isCompletedSectionExpanded }
                                 ) {
-                                    Row(modifier = Modifier.padding(14.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(imageVector = if (isCompletedSectionExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null)
+                                            Icon(imageVector = if (isCompletedSectionExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, modifier = Modifier.size(20.dp))
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Text(text = stringResource(R.string.completed_tasks), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                                         }
