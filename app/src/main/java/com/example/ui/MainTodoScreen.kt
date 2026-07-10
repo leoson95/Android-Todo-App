@@ -302,6 +302,12 @@ fun MainTodoScreen(
             ) {
                 val activeTasks = remember(tasks) { tasks.filter { !it.isCompleted } }
                 val completedTasks = remember(tasks) { tasks.filter { it.isCompleted } }
+                
+                // Pre-group subtasks by taskId for O(1) access during scroll
+                val subtasksGrouped = remember(subtasks) { subtasks.groupBy { it.taskId } }
+                
+                // Pre-group active tasks by categoryId
+                val activeTasksGrouped = remember(activeTasks) { activeTasks.groupBy { it.categoryId } }
 
                 if (tasks.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
@@ -311,21 +317,26 @@ fun MainTodoScreen(
                     var isCompletedSectionExpanded by remember { mutableStateOf(false) }
                     val fallbackPrimary = MaterialTheme.colorScheme.primary
                     val uncategorizedStr = stringResource(R.string.uncategorized)
+                    
+                    // Memoize categories to display
+                    val allCategoriesToDisplay = remember(categories, activeTasksGrouped) {
+                        val list = categories.toMutableList()
+                        if (activeTasksGrouped[-1]?.isNotEmpty() == true) {
+                            list.add(Category(id = -1, name = uncategorizedStr, colorHex = "#94A3B8"))
+                        }
+                        list
+                    }
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize().weight(1f).padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(bottom = 100.dp)
                     ) {
-                        val activeTasksGrouped = activeTasks.groupBy { it.categoryId }
-                        val allCategoriesToDisplay = categories.toMutableList()
-                        if (activeTasksGrouped[-1]?.isNotEmpty() == true) {
-                            allCategoriesToDisplay.add(Category(id = -1, name = uncategorizedStr, colorHex = "#94A3B8"))
-                        }
-
                         allCategoriesToDisplay.forEach { category ->
                             val catId = category.id
                             val catTasks = activeTasksGrouped[catId] ?: emptyList()
+                            
+                            // Memoize color parsing
                             val catColor = try { Color(android.graphics.Color.parseColor(category.colorHex)) } catch (e: Exception) { fallbackPrimary }
 
                             if (catTasks.isNotEmpty() || category.id != -1) {
@@ -365,7 +376,7 @@ fun MainTodoScreen(
                                                 catTasks.forEach { task ->
                                                     TaskRowItem(
                                                         task = task,
-                                                        subtasks = subtasks.filter { it.taskId == task.id },
+                                                        subtasks = subtasksGrouped[task.id] ?: emptyList(),
                                                         accentColor = catColor,
                                                         isDarkTheme = isDarkTheme,
                                                         onToggleComplete = { viewModel.toggleTaskCompleted(task) },
@@ -382,7 +393,7 @@ fun MainTodoScreen(
                         }
 
                         if (completedTasks.isNotEmpty()) {
-                            item {
+                            item(key = "completed_section_header") {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().glassCard(isDarkTheme = isDarkTheme).clickable { isCompletedSectionExpanded = !isCompletedSectionExpanded }
                                 ) {
@@ -398,11 +409,12 @@ fun MainTodoScreen(
                                     }
                                 }
                             }
+                            
                             if (isCompletedSectionExpanded) {
-                                items(completedTasks, key = { it.id }) { task ->
+                                items(completedTasks, key = { "completed_${it.id}" }) { task ->
                                     TaskRowItem(
                                         task = task,
-                                        subtasks = subtasks.filter { it.taskId == task.id },
+                                        subtasks = subtasksGrouped[task.id] ?: emptyList(),
                                         accentColor = MaterialTheme.colorScheme.outline,
                                         isDarkTheme = isDarkTheme,
                                         onToggleComplete = { viewModel.toggleTaskCompleted(task) },
