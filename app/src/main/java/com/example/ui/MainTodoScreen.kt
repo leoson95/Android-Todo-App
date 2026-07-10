@@ -26,13 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
@@ -62,19 +60,26 @@ fun MainTodoScreen(
 
     val onPlayTap = { SoundManager.playTap() }
 
-    // Pre-calculate everything outside the UI to keep scrolling light
-    val activeTasks = remember(tasks) { tasks.filter { !it.isCompleted } }
-    val completedTasks = remember(tasks) { tasks.filter { it.isCompleted } }
-    val subtasksGrouped = remember(subtasks) { subtasks.groupBy { it.taskId } }
-    val activeTasksGrouped = remember(activeTasks) { activeTasks.groupBy { it.categoryId } }
+    // Optimization: Group data once outside the scrolling list
+    val activeTasksGrouped by remember(tasks) {
+        derivedStateOf { tasks.filter { !it.isCompleted }.groupBy { it.categoryId } }
+    }
+    val completedTasks by remember(tasks) {
+        derivedStateOf { tasks.filter { it.isCompleted } }
+    }
+    val subtasksGrouped by remember(subtasks) {
+        derivedStateOf { subtasks.groupBy { it.taskId } }
+    }
     
     val uncategorizedStr = stringResource(R.string.uncategorized)
-    val allCategoriesToDisplay = remember(categories, activeTasksGrouped) {
-        val list = categories.toMutableList()
-        if (activeTasksGrouped[-1]?.isNotEmpty() == true) {
-            list.add(Category(id = -1, name = uncategorizedStr, colorHex = "#94A3B8"))
+    val allCategoriesToDisplay by remember(categories, activeTasksGrouped) {
+        derivedStateOf {
+            val list = categories.toMutableList()
+            if (activeTasksGrouped[-1]?.isNotEmpty() == true) {
+                list.add(Category(id = -1, name = uncategorizedStr, colorHex = "#94A3B8"))
+            }
+            list
         }
-        list
     }
 
     if (isCategoryManagerShown) {
@@ -143,30 +148,22 @@ fun MainTodoScreen(
     // Category Options Dialog
     if (isCategoryActionDialogShown && selectedCategoryForAction != null) {
         val cat = selectedCategoryForAction!!
-        val locale = java.util.Locale.getDefault()
+        val locale = Locale.getDefault()
         val layoutDirection = if (locale.language == "fa") androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
-        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
+        CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
             AlertDialog(
                 onDismissRequest = { isCategoryActionDialogShown = false },
                 title = { Text(stringResource(R.string.manage_category_prefix) + " " + cat.name, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
                 text = { Text(stringResource(R.string.category_options_desc)) },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            isCategoryActionDialogShown = false
-                            isEditCategoryNameDialogShown = true
-                        }
-                    ) {
+                    Button(onClick = { isCategoryActionDialogShown = false; isEditCategoryNameDialogShown = true }) {
                         Text(stringResource(R.string.edit_name))
                     }
                 },
                 dismissButton = {
                     Row {
                         TextButton(
-                            onClick = {
-                                viewModel.deleteCategory(cat)
-                                isCategoryActionDialogShown = false
-                            },
+                            onClick = { viewModel.deleteCategory(cat); isCategoryActionDialogShown = false },
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
                             Text(stringResource(R.string.delete_category))
@@ -185,9 +182,9 @@ fun MainTodoScreen(
     if (isEditCategoryNameDialogShown && selectedCategoryForAction != null) {
         val cat = selectedCategoryForAction!!
         var newName by remember { mutableStateOf(cat.name) }
-        val locale = java.util.Locale.getDefault()
+        val locale = Locale.getDefault()
         val layoutDirection = if (locale.language == "fa") androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
-        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
+        CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides layoutDirection) {
             AlertDialog(
                 onDismissRequest = { isEditCategoryNameDialogShown = false },
                 title = { Text(stringResource(R.string.edit_category_title), fontWeight = FontWeight.Bold) },
@@ -222,19 +219,9 @@ fun MainTodoScreen(
         }
     }
 
-    val bgColor = if (isDarkTheme) Color(0xFF0B1120) else Color(0xFFE2E8F0)
-    val meshColor1 = if (isDarkTheme) Color(0xFF1E293B) else Color(0xFFCBD5E1)
-    val meshColor2 = if (isDarkTheme) Color(0xFF312E81).copy(alpha = 0.2f) else Color(0xFF93C5FD).copy(alpha = 0.3f)
+    val bgColor = if (isDarkTheme) Color(0xFF0B1120) else Color(0xFFF1F5F9)
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(bgColor, meshColor1, meshColor2)
-                )
-            )
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(bgColor)) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
@@ -261,16 +248,10 @@ fun MainTodoScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            onPlayTap()
-                            onNavigateToReminders()
-                        }) {
+                        IconButton(onClick = { onPlayTap(); onNavigateToReminders() }) {
                             Icon(Icons.Rounded.Notifications, contentDescription = stringResource(R.string.manage_reminders))
                         }
-                        IconButton(onClick = {
-                            onPlayTap()
-                            isSettingsSheetShown = true
-                        }) {
+                        IconButton(onClick = { onPlayTap(); isSettingsSheetShown = true }) {
                             Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings))
                         }
                     },
@@ -290,10 +271,7 @@ fun MainTodoScreen(
                 val fallbackPrimary = MaterialTheme.colorScheme.primary
 
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 16.dp),
+                    modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
@@ -354,12 +332,10 @@ fun MainTodoScreen(
                     if (completedTasks.isNotEmpty()) {
                         item(key = "completed_section_header") {
                             Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { isCompletedSectionExpanded = !isCompletedSectionExpanded },
+                                modifier = Modifier.fillMaxWidth().clickable { isCompletedSectionExpanded = !isCompletedSectionExpanded },
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.6f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                                color = if (isDarkTheme) Color(0xFF1E293B) else Color(0xFFE2E8F0),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
                             ) {
                                 Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -393,22 +369,25 @@ fun MainTodoScreen(
             }
         }
 
-        // Glassmorphism FAB
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 24.dp, bottom = 42.dp)
-                .size(64.dp)
-                .glassFab(isDarkTheme = isDarkTheme)
-                .clickable { preSelectedCategoryId = null; onPlayTap(); isAddTaskSheetShown = true },
-            contentAlignment = Alignment.Center
+        // Simple Glass Fab - No complicated transparency
+        Surface(
+            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 24.dp, bottom = 42.dp).size(64.dp),
+            shape = CircleShape,
+            color = if (isDarkTheme) Color(0xFF334155) else Color.White,
+            shadowElevation = 8.dp,
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = stringResource(R.string.add_task_title),
-                modifier = Modifier.size(32.dp),
-                tint = if (isDarkTheme) Color.White else MaterialTheme.colorScheme.primary
-            )
+            Box(
+                modifier = Modifier.fillMaxSize().clickable { preSelectedCategoryId = null; onPlayTap(); isAddTaskSheetShown = true },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.add_task_title),
+                    modifier = Modifier.size(32.dp),
+                    tint = if (isDarkTheme) Color.White else MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }
@@ -460,7 +439,6 @@ fun TaskRowItem(
     var isExpanded by remember { mutableStateOf(true) }
     val hasSubtasks = subtasks.isNotEmpty()
     
-    // Optimize expensive calculations
     val (completedCount, progress) = remember(subtasks) {
         val count = subtasks.count { it.isCompleted }
         val frac = if (subtasks.isNotEmpty()) count.toFloat() / subtasks.size else 0f
@@ -471,22 +449,19 @@ fun TaskRowItem(
     val formattedReminder = remember(task.reminderTime) {
         task.reminderTime?.let {
             val dateStr = JalaliCalendar.formatShamsiDateShort(it)
-            val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val timeStr = timeFormatter.format(Date(it)).toPersianDigits()
-            "⏰ $dateStr" + clockSuffixStr + timeStr
+            val timeStr = SimpleDateFormat("HH:mm", Locale.US).format(Date(it)).toPersianDigits()
+            "⏰ $dateStr $clockSuffixStr $timeStr"
         }
     }
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }
-            .padding(vertical = 1.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
         shape = RoundedCornerShape(12.dp),
-        color = if (isDarkTheme) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.7f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+        color = if (isDarkTheme) Color(0xFF1E293B) else Color.White,
+        shadowElevation = 0.5.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, if(isDarkTheme) Color.White.copy(alpha = 0.05f) else Color.Black.copy(alpha = 0.05f))
     ) {
-        Column(modifier = Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
+        Column(modifier = Modifier.clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(vertical = 4.dp, horizontal = 8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = task.isCompleted,
@@ -567,8 +542,9 @@ fun EmptyStateView(isDarkTheme: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth().padding(32.dp),
         shape = RoundedCornerShape(20.dp),
-        color = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.8f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+        color = if (isDarkTheme) Color(0xFF1E293B) else Color.White,
+        shadowElevation = 2.dp,
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
     ) {
         Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Icon(imageVector = Icons.Default.TaskAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f), modifier = Modifier.size(64.dp))
