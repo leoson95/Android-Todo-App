@@ -4,37 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.shadow
 
 fun Modifier.glassCard(
-    shape: Shape = RoundedCornerShape(20.dp),
-    isDarkTheme: Boolean
-): Modifier = composed {
-    val backgroundColor = if (isDarkTheme) {
-        Color(0xFF0F172A).copy(alpha = 0.65f)
-    } else {
-        Color.White.copy(alpha = 0.75f)
-    }
+    isDarkTheme: Boolean,
+    shape: Shape = RoundedCornerShape(12.dp)
+): Modifier {
+    val backgroundColor = if (isDarkTheme) Color(0xFF0F172A).copy(alpha = 0.65f) else Color.White.copy(alpha = 0.75f)
+    val borderColor = if (isDarkTheme) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.4f)
     
-    val borderColor = if (isDarkTheme) {
-        Brush.linearGradient(
-            listOf(Color.White.copy(alpha = 0.15f), Color.Transparent)
-        )
-    } else {
-        Brush.linearGradient(
-            listOf(Color.White, Color.White.copy(alpha = 0.3f))
-        )
-    }
-
-    this
+    return this
         .clip(shape)
         .background(backgroundColor)
         .border(1.dp, borderColor, shape)
@@ -42,31 +26,11 @@ fun Modifier.glassCard(
 
 fun Modifier.glassFab(
     isDarkTheme: Boolean
-): Modifier = composed {
-    val backgroundColor = if (isDarkTheme) {
-        Color.White.copy(alpha = 0.1f)
-    } else {
-        Color.White.copy(alpha = 0.3f)
-    }
-    
-    val borderColor = if (isDarkTheme) {
-        Brush.linearGradient(
-            listOf(Color.White.copy(alpha = 0.4f), Color.White.copy(alpha = 0.05f))
-        )
-    } else {
-        Brush.linearGradient(
-            listOf(Color.White.copy(alpha = 0.8f), Color.White.copy(alpha = 0.2f))
-        )
-    }
+): Modifier {
+    val backgroundColor = if (isDarkTheme) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.3f)
+    val borderColor = if (isDarkTheme) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.6f)
 
-    this
-        .shadow(
-            elevation = 16.dp,
-            shape = CircleShape,
-            clip = false,
-            ambientColor = Color.Black.copy(alpha = 0.25f),
-            spotColor = Color.Black.copy(alpha = 0.25f)
-        )
+    return this
         .clip(CircleShape)
         .background(backgroundColor)
         .border(1.5.dp, borderColor, CircleShape)

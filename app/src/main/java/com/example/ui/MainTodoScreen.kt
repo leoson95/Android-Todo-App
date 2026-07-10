@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -217,40 +218,42 @@ fun MainTodoScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .drawBehind {
+            .drawWithCache {
                 val bgColor = if (isDarkTheme) Color(0xFF0B1120) else Color(0xFFE2E8F0)
                 val meshColor1 = if (isDarkTheme) Color(0xFF3B82F6).copy(alpha = 0.35f) else Color(0xFF3B82F6).copy(alpha = 0.25f)
                 val meshColor2 = if (isDarkTheme) Color(0xFF8B5CF6).copy(alpha = 0.35f) else Color(0xFF8B5CF6).copy(alpha = 0.25f)
                 val meshColor3 = if (isDarkTheme) Color(0xFF10B981).copy(alpha = 0.35f) else Color(0xFF10B981).copy(alpha = 0.25f)
-
-                drawRect(color = bgColor)
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(meshColor1, Color.Transparent),
+                
+                onDrawBehind {
+                    drawRect(color = bgColor)
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(meshColor1, Color.Transparent),
+                            center = Offset(size.width * -0.1f, size.height * -0.1f),
+                            radius = size.width * 1.2f
+                        ),
                         center = Offset(size.width * -0.1f, size.height * -0.1f),
                         radius = size.width * 1.2f
-                    ),
-                    center = Offset(size.width * -0.1f, size.height * -0.1f),
-                    radius = size.width * 1.2f
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(meshColor2, Color.Transparent),
+                    )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(meshColor2, Color.Transparent),
+                            center = Offset(size.width * 1.1f, size.height * 0.4f),
+                            radius = size.width * 1.0f
+                        ),
                         center = Offset(size.width * 1.1f, size.height * 0.4f),
                         radius = size.width * 1.0f
-                    ),
-                    center = Offset(size.width * 1.1f, size.height * 0.4f),
-                    radius = size.width * 1.0f
-                )
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(meshColor3, Color.Transparent),
+                    )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(meshColor3, Color.Transparent),
+                            center = Offset(size.width * 0.2f, size.height * 1.1f),
+                            radius = size.width * 0.9f
+                        ),
                         center = Offset(size.width * 0.2f, size.height * 1.1f),
                         radius = size.width * 0.9f
-                    ),
-                    center = Offset(size.width * 0.2f, size.height * 1.1f),
-                    radius = size.width * 0.9f
-                )
+                    )
+                }
             }
     ) {
         Scaffold(
@@ -393,7 +396,10 @@ fun MainTodoScreen(
                         if (completedTasks.isNotEmpty()) {
                             item(key = "completed_section_header") {
                                 Box(
-                                    modifier = Modifier.fillMaxWidth().glassCard(isDarkTheme = isDarkTheme).clickable { isCompletedSectionExpanded = !isCompletedSectionExpanded }
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .glassCard(isDarkTheme = isDarkTheme, shape = RoundedCornerShape(12.dp))
+                                        .clickable { isCompletedSectionExpanded = !isCompletedSectionExpanded }
                                 ) {
                                     Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -494,18 +500,30 @@ fun TaskRowItem(
 ) {
     var isExpanded by remember { mutableStateOf(true) }
     val hasSubtasks = subtasks.isNotEmpty()
-    val completedSubtasksCount = subtasks.count { it.isCompleted }
-    val progressFraction = if (hasSubtasks) completedSubtasksCount.toFloat() / subtasks.size else 0f
+    
+    // Optimize expensive calculations
+    val (completedCount, progress) = remember(subtasks) {
+        val count = subtasks.count { it.isCompleted }
+        val frac = if (subtasks.isNotEmpty()) count.toFloat() / subtasks.size else 0f
+        count to frac
+    }
+
     val clockSuffixStr = stringResource(R.string.clock_suffix)
-    val formattedReminder = task.reminderTime?.let {
-        val dateStr = JalaliCalendar.formatShamsiDateShort(it)
-        val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val timeStr = timeFormatter.format(Date(it)).toPersianDigits()
-        "⏰ $dateStr" + clockSuffixStr + timeStr
+    val formattedReminder = remember(task.reminderTime) {
+        task.reminderTime?.let {
+            val dateStr = JalaliCalendar.formatShamsiDateShort(it)
+            val timeFormatter = SimpleDateFormat("HH:mm", Locale.getDefault())
+            val timeStr = timeFormatter.format(Date(it)).toPersianDigits()
+            "⏰ $dateStr" + clockSuffixStr + timeStr
+        }
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(vertical = 4.dp, horizontal = 8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(isDarkTheme = isDarkTheme, shape = RoundedCornerShape(12.dp))
+            .clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }
+            .padding(vertical = 4.dp, horizontal = 8.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
@@ -538,7 +556,7 @@ fun TaskRowItem(
                         Text(text = formattedReminder, fontSize = 10.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                     }
                     if (hasSubtasks) {
-                        Text(text = "🔗 " + completedSubtasksCount.toPersianDigits() + stringResource(R.string.of) + subtasks.size.toPersianDigits() + stringResource(R.string.subtasks_suffix), fontSize = 10.sp, color = accentColor, fontWeight = FontWeight.Bold)
+                        Text(text = "🔗 " + completedCount.toPersianDigits() + stringResource(R.string.of) + subtasks.size.toPersianDigits() + stringResource(R.string.subtasks_suffix), fontSize = 10.sp, color = accentColor, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -550,8 +568,8 @@ fun TaskRowItem(
         if (hasSubtasks && !task.isCompleted) {
             Spacer(modifier = Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                LinearProgressIndicator(progress = { progressFraction }, modifier = Modifier.weight(1f).height(4.dp).clip(CircleShape), color = accentColor, trackColor = accentColor.copy(alpha = 0.15f))
-                Text(text = "${(progressFraction * 100).toInt().toPersianDigits()}%", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accentColor)
+                LinearProgressIndicator(progress = { progress }, modifier = Modifier.weight(1f).height(4.dp).clip(CircleShape), color = accentColor, trackColor = accentColor.copy(alpha = 0.15f))
+                Text(text = "${(progress * 100).toInt().toPersianDigits()}%", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accentColor)
             }
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(8.dp))
