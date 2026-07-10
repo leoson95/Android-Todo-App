@@ -495,15 +495,26 @@ fun TaskRowItem(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(14.dp)
+        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(vertical = 8.dp, horizontal = 12.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleComplete() }, colors = CheckboxDefaults.colors(checkedColor = accentColor))
             Spacer(modifier = Modifier.width(4.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = task.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None, color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                )
                 if (task.description.isNotBlank()) {
-                    Text(text = task.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+                    Text(
+                        text = task.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
                 Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (formattedReminder != null && !task.isCompleted) {
@@ -537,7 +548,12 @@ fun TaskRowItem(
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)).clickable { onToggleSubtask(sub) }.padding(horizontal = 8.dp, vertical = 4.dp)) {
                                 Checkbox(checked = sub.isCompleted, onCheckedChange = { onToggleSubtask(sub) }, modifier = Modifier.size(24.dp), colors = CheckboxDefaults.colors(checkedColor = accentColor))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(text = sub.title, style = MaterialTheme.typography.bodySmall, textDecoration = if (sub.isCompleted) TextDecoration.LineThrough else TextDecoration.None, color = if (sub.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(
+                                    text = sub.title,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    textDecoration = if (sub.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
+                                    color = if (sub.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
                     }
