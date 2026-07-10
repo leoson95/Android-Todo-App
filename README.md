@@ -2,7 +2,7 @@
 ### Ultra-Modern Glassmorphism Todo App for Android
 
 <div align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" width="128" height="128" />
+  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp" width="128" height="128" />
   <br />
   <p align="center">
     <a href="https://kotlinlang.org/docs/home.html"><img src="https://img.shields.io/badge/Kotlin-2.0-purple.svg?style=flat&logo=kotlin" alt="Kotlin 2.0" /></a>
@@ -24,14 +24,16 @@
 <div align="center">
   <table>
     <tr>
-      <td width="33%"><img src="screenshots/main.png" alt="Main Screen" /></td>
-      <td width="33%"><img src="screenshots/settings.png" alt="Settings" /></td>
-      <td width="33%"><img src="screenshots/add task.png" alt="Add Task" /></td>
+      <td width="25%"><img src="screenshots/mainscreen.png" alt="Main Screen" /></td>
+      <td width="25%"><img src="screenshots/darkmode.png" alt="Dark Mode" /></td>
+      <td width="25%"><img src="screenshots/settings.png" alt="Settings" /></td>
+      <td width="25%"><img src="screenshots/add-task.png" alt="Add Task" /></td>
     </tr>
     <tr>
       <td align="center"><b>Dashboard</b><br/>پیشخوان اصلی</td>
-      <td align="center"><b>Smart Settings</b><br/>تنظیمات پیشرفته</td>
-      <td align="center"><b>Task Entry</b><br/>ثبت وظیفه جدید</td>
+      <td align="center"><b>Dark Mode</b><br/>حالت تاریک</td>
+      <td align="center"><b>Settings</b><br/>تنظیمات</td>
+      <td align="center"><b>Task Entry</b><br/>ثبت وظیفه</td>
     </tr>
   </table>
 </div>
@@ -50,10 +52,10 @@
 
 **فارسی:** پشتیبانی کامل از تقویم **شمسی** و **میلادی**. دارای سیستم تکرار پیشرفته (مثلاً تکرار هر X روز یک‌بار) و انتخاب‌گر زمان عقربه‌ای برای تجربه کاربری راحت‌تر.
 
-### 🗂️ Task Organization (سازماندهی حرفه‌ای)
-**English:** Categorize tasks with custom colors, manage subtasks (checklists), and set precise reminders with custom repeat patterns.
+### ⚡ Performance Optimized (بهینه‌سازی عملکرد)
+**English:** Deeply optimized list rendering with `derivedStateOf`, `remember` caching, and flattened layouts to ensure 60FPS scrolling even with large task lists.
 
-**فارسی:** دسته‌بندی کارها با رنگ‌های دلخواه، مدیریت زیرکارها (چک‌لیست) و تنظیم یادآوری‌های دقیق با الگوهای تکرار شخصی‌سازی شده.
+**فارسی:** رندر فوق‌العاده سریع لیست‌ها با استفاده از تکنیک‌های کشینگ لایه‌ای و بهینه‌سازی محاسبات، جهت تضمین اسکرول کاملاً روان حتی در لیست‌های بسیار طولانی.
 
 ---
 
@@ -64,7 +66,7 @@
 - **Database:** Room Persistence Library
 - **Architecture:** MVVM + Repository Pattern
 - **Date Logic:** Custom Jalali Calendar implementation
-- **Scheduling:** AlarmManager for precise reminders
+- **Optimization:** R8/Proguard enabled for peak performance
 - **Concurrency:** Coroutines & Flow
 
 ---
@@ -73,10 +75,13 @@
 
 ### Build & Run / نصب و اجرا
 ```bash
-git clone https://github.com/your-username/my-tasks.git
+git clone https://github.com/leoson95/Android-Todo-App.git
 # Open in Android Studio Ladybug or newer
-# Sync Gradle and Run
+# To experience 60FPS smoothness, run the Release build:
+./gradlew assembleRelease
 ```
+
+> **⚠️ Performance Tip:** Jetpack Compose is significantly faster in **Release** mode. For the best experience (Glassmorphism effects + smooth scrolling), always use the release APK.
 
 ---
 
