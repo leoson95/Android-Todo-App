@@ -2,7 +2,7 @@
 ### Ultra-Modern Glassmorphism Todo App for Android
 
 <div align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp" width="128" height="128" />
+  <img src="screenshots/logo.webp" width="128" height="128" />
   <br />
   <p align="center">
     <a href="https://kotlinlang.org/docs/home.html"><img src="https://img.shields.io/badge/Kotlin-2.0-purple.svg?style=flat&logo=kotlin" alt="Kotlin 2.0" /></a>
