@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -329,7 +330,7 @@ fun MainTodoScreen(
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize().weight(1f).padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(bottom = 100.dp)
                     ) {
                         allCategoriesToDisplay.forEach { category ->
@@ -347,9 +348,9 @@ fun MainTodoScreen(
                                             .clip(RoundedCornerShape(24.dp))
                                             .background(Brush.verticalGradient(listOf(catColor.copy(alpha = 0.08f), catColor.copy(alpha = 0.02f))))
                                             .border(1.dp, Brush.linearGradient(listOf(catColor.copy(alpha = 0.2f), Color.Transparent)), RoundedCornerShape(24.dp))
-                                            .padding(14.dp)
+                                            .padding(10.dp)
                                     ) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                             CategorySectionHeader(
                                                 category = category,
                                                 catColor = catColor,
@@ -507,11 +508,11 @@ fun TaskRowItem(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(vertical = 8.dp, horizontal = 12.dp)
+        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(vertical = 6.dp, horizontal = 10.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleComplete() }, colors = CheckboxDefaults.colors(checkedColor = accentColor))
-            Spacer(modifier = Modifier.width(4.dp))
+            Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleComplete() }, colors = CheckboxDefaults.colors(checkedColor = accentColor), modifier = Modifier.scale(0.9f))
+            Spacer(modifier = Modifier.width(2.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.title,
@@ -525,10 +526,11 @@ fun TaskRowItem(
                         text = task.description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 2.dp)
+                        modifier = Modifier.padding(top = 1.dp),
+                        lineHeight = 16.sp
                     )
                 }
-                Row(modifier = Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(modifier = Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (formattedReminder != null && !task.isCompleted) {
                         Text(text = formattedReminder, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                     }
@@ -538,33 +540,34 @@ fun TaskRowItem(
                 }
             }
             Row {
-                IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) { Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), modifier = Modifier.size(20.dp)) }
-                IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) { Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f), modifier = Modifier.size(20.dp)) }
+                IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), modifier = Modifier.size(18.dp)) }
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f), modifier = Modifier.size(18.dp)) }
             }
         }
         if (hasSubtasks && !task.isCompleted) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-                LinearProgressIndicator(progress = { progressFraction }, modifier = Modifier.weight(1f).height(5.dp).clip(CircleShape), color = accentColor, trackColor = accentColor.copy(alpha = 0.15f))
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                LinearProgressIndicator(progress = { progressFraction }, modifier = Modifier.weight(1f).height(4.dp).clip(CircleShape), color = accentColor, trackColor = accentColor.copy(alpha = 0.15f))
                 Text(text = "${(progressFraction * 100).toInt().toPersianDigits()}%", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accentColor)
             }
             if (isExpanded) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     subtasks.forEach { sub ->
-                        Row(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 2.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(modifier = Modifier.width(18.dp).height(24.dp)) {
-                                Box(modifier = Modifier.align(Alignment.CenterStart).width(1.5.dp).fillMaxHeight().background(accentColor.copy(alpha = 0.3f)))
-                                Box(modifier = Modifier.align(Alignment.CenterStart).width(12.dp).height(1.5.dp).background(accentColor.copy(alpha = 0.3f)))
+                        Row(modifier = Modifier.fillMaxWidth().padding(start = 12.dp, top = 1.dp, bottom = 1.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.width(16.dp).height(20.dp)) {
+                                Box(modifier = Modifier.align(Alignment.CenterStart).width(1.dp).fillMaxHeight().background(accentColor.copy(alpha = 0.3f)))
+                                Box(modifier = Modifier.align(Alignment.CenterStart).width(10.dp).height(1.dp).background(accentColor.copy(alpha = 0.3f)))
                             }
-                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)).clickable { onToggleSubtask(sub) }.padding(horizontal = 8.dp, vertical = 4.dp)) {
-                                Checkbox(checked = sub.isCompleted, onCheckedChange = { onToggleSubtask(sub) }, modifier = Modifier.size(24.dp), colors = CheckboxDefaults.colors(checkedColor = accentColor))
-                                Spacer(modifier = Modifier.width(6.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f).clip(RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)).clickable { onToggleSubtask(sub) }.padding(horizontal = 6.dp, vertical = 2.dp)) {
+                                Checkbox(checked = sub.isCompleted, onCheckedChange = { onToggleSubtask(sub) }, modifier = Modifier.size(20.dp).scale(0.85f), colors = CheckboxDefaults.colors(checkedColor = accentColor))
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = sub.title,
                                     style = MaterialTheme.typography.bodySmall,
                                     textDecoration = if (sub.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                                    color = if (sub.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                                    color = if (sub.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
+                                    lineHeight = 14.sp
                                 )
                             }
                         }
