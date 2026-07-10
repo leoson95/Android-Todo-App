@@ -4,45 +4,53 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.shadow
 
-/**
- * Performance-optimized glass card modifier.
- * Removed 'composed' and 'shadow' to eliminate heavy GPU overdraw during scrolling.
- */
 fun Modifier.glassCard(
-    isDarkTheme: Boolean,
-    shape: Shape = RoundedCornerShape(12.dp)
-): Modifier {
+    shape: Shape = RoundedCornerShape(20.dp),
+    isDarkTheme: Boolean
+): Modifier = composed {
+    // Independent of system theme, using provided isDarkTheme state
     val backgroundColor = if (isDarkTheme) {
-        Color(0xFF0F172A).copy(alpha = 0.65f)
+        Color(0xFF0F172A).copy(alpha = 0.65f) // Reduced alpha for more glass effect
     } else {
-        Color.White.copy(alpha = 0.75f)
+        Color.White.copy(alpha = 0.75f) // Reduced alpha for more glass effect
     }
     
     val borderColor = if (isDarkTheme) {
-        Color.White.copy(alpha = 0.15f)
+        Brush.linearGradient(
+            listOf(Color.White.copy(alpha = 0.2f), Color.Transparent)
+        )
     } else {
-        Color.White.copy(alpha = 0.4f)
+        Brush.linearGradient(
+            listOf(Color.White, Color.White.copy(alpha = 0.4f))
+        )
     }
 
-    return this
+    this
+        .shadow(
+            elevation = if (isDarkTheme) 14.dp else 4.dp,
+            shape = shape,
+            clip = false,
+            ambientColor = Color.Black.copy(alpha = 0.2f),
+            spotColor = Color.Black.copy(alpha = 0.2f)
+        )
         .clip(shape)
         .background(backgroundColor)
-        .border(1.dp, borderColor, shape)
+        .border(1.2.dp, borderColor, shape)
 }
 
-/**
- * Performance-optimized glass FAB modifier.
- */
 fun Modifier.glassFab(
     isDarkTheme: Boolean
-): Modifier {
+): Modifier = composed {
     val backgroundColor = if (isDarkTheme) {
         Color.White.copy(alpha = 0.1f)
     } else {
@@ -50,12 +58,23 @@ fun Modifier.glassFab(
     }
     
     val borderColor = if (isDarkTheme) {
-        Color.White.copy(alpha = 0.4f)
+        Brush.linearGradient(
+            listOf(Color.White.copy(alpha = 0.4f), Color.White.copy(alpha = 0.05f))
+        )
     } else {
-        Color.White.copy(alpha = 0.6f)
+        Brush.linearGradient(
+            listOf(Color.White.copy(alpha = 0.8f), Color.White.copy(alpha = 0.2f))
+        )
     }
 
-    return this
+    this
+        .shadow(
+            elevation = 16.dp,
+            shape = CircleShape,
+            clip = false,
+            ambientColor = Color.Black.copy(alpha = 0.25f),
+            spotColor = Color.Black.copy(alpha = 0.25f)
+        )
         .clip(CircleShape)
         .background(backgroundColor)
         .border(1.5.dp, borderColor, CircleShape)
