@@ -29,10 +29,17 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 if (task != null) {
                     when (action) {
                         "ACTION_DONE" -> {
-                            val updatedTask = task.copy(isCompleted = true)
-                            dao.updateTask(updatedTask)
-                            ReminderScheduler.cancel(context, taskId)
-                            SoundManager.playSuccess()
+                            val isRecurring = task.repeatType != null && task.repeatType != "none"
+                            if (!isRecurring) {
+                                val updatedTask = task.copy(isCompleted = true)
+                                dao.updateTask(updatedTask)
+                                ReminderScheduler.cancel(context, taskId)
+                                SoundManager.playSuccess()
+                            } else {
+                                // For recurring tasks, "Done" in notification just dismisses it
+                                // because the next occurrence is already scheduled in ReminderReceiver
+                                SoundManager.playTap()
+                            }
                         }
                         "ACTION_SNOOZE" -> {
                             val snoozeTime = System.currentTimeMillis() + 10 * 60 * 1000L // 10 minutes

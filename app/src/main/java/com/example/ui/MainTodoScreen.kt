@@ -508,10 +508,15 @@ fun TaskRowItem(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(vertical = 6.dp, horizontal = 10.dp)
+        modifier = Modifier.fillMaxWidth().glassCard(shape = RoundedCornerShape(12.dp), isDarkTheme = isDarkTheme).clickable { if (hasSubtasks) isExpanded = !isExpanded else SoundManager.playTap() }.padding(vertical = 4.dp, horizontal = 8.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = task.isCompleted, onCheckedChange = { onToggleComplete() }, colors = CheckboxDefaults.colors(checkedColor = accentColor), modifier = Modifier.scale(0.9f))
+            Checkbox(
+                checked = task.isCompleted,
+                onCheckedChange = { onToggleComplete() },
+                colors = CheckboxDefaults.colors(checkedColor = accentColor),
+                modifier = Modifier.size(32.dp).scale(0.85f)
+            )
             Spacer(modifier = Modifier.width(2.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -519,7 +524,8 @@ fun TaskRowItem(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
-                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 18.sp
                 )
                 if (task.description.isNotBlank()) {
                     Text(
@@ -527,21 +533,21 @@ fun TaskRowItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 1.dp),
-                        lineHeight = 16.sp
+                        lineHeight = 14.sp
                     )
                 }
                 Row(modifier = Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (formattedReminder != null && !task.isCompleted) {
-                        Text(text = formattedReminder, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                        Text(text = formattedReminder, fontSize = 10.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                     }
                     if (hasSubtasks) {
-                        Text(text = "🔗 " + completedSubtasksCount.toPersianDigits() + stringResource(R.string.of) + subtasks.size.toPersianDigits() + stringResource(R.string.subtasks_suffix), fontSize = 11.sp, color = accentColor, fontWeight = FontWeight.Bold)
+                        Text(text = "🔗 " + completedSubtasksCount.toPersianDigits() + stringResource(R.string.of) + subtasks.size.toPersianDigits() + stringResource(R.string.subtasks_suffix), fontSize = 10.sp, color = accentColor, fontWeight = FontWeight.Bold)
                     }
                 }
             }
-            Row {
-                IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), modifier = Modifier.size(18.dp)) }
-                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) { Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f), modifier = Modifier.size(18.dp)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onEdit, modifier = Modifier.size(28.dp)) { Icon(imageVector = Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), modifier = Modifier.size(16.dp)) }
+                IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) { Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f), modifier = Modifier.size(16.dp)) }
             }
         }
         if (hasSubtasks && !task.isCompleted) {
