@@ -35,13 +35,13 @@ interface TodoDao {
 
 
     // --- Task Queries ---
-    @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
+    @Query("SELECT * FROM tasks ORDER BY createdAt ASC")
     fun getTasks(): Flow<List<Task>>
 
     @Query("SELECT * FROM tasks")
     suspend fun getAllTasksList(): List<Task>
 
-    @Query("SELECT * FROM tasks WHERE categoryId = :categoryId ORDER BY createdAt DESC")
+    @Query("SELECT * FROM tasks WHERE categoryId = :categoryId ORDER BY createdAt ASC")
     fun getTasksByCategoryId(categoryId: Int): Flow<List<Task>>
 
     @Query("SELECT * FROM tasks WHERE id = :id LIMIT 1")
